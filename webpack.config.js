@@ -21,11 +21,14 @@ module.exports = (env, options) => {
     mode: mode,
     entry: { /* required field */
       light: __dirname + '/node_modules/primevue/resources/themes/md-light-indigo/theme.css',
-      night: __dirname + '/node_modules/primevue/resources/themes/vela-blue/theme.css',
+      night: __dirname + '/node_modules/primevue/resources/themes/md-dark-indigo/theme.css',
       app: __dirname + '/main.js'
     },
     output: { /* required field */
       filename: '[name].bundle.js'
+    },
+    resolve: {
+      extensions: ['.js', '.vue']
     },
     module: {
       rules: [
