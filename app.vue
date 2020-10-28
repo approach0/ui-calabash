@@ -64,12 +64,16 @@ module.exports = {
   },
 
   watch: {
-    nightTheme: function (becomeNightTheme, _) {
+    nightTheme: function(becomeNightTheme, _) {
       if (becomeNightTheme) {
         this.changeTheme('night.css')
       } else {
         this.changeTheme('light.css')
       }
+    },
+
+    selectedHistory: function(selectedJob) {
+      this.input_job = selectedJob['jobname']
     }
   },
 
@@ -101,7 +105,7 @@ module.exports = {
         },
         {
           label: 'Run as pinned job',
-          icon: 'pi pi-circle-off',
+          icon: 'pi pi-check-square',
           command: this.showJob
         },
         {
@@ -182,7 +186,8 @@ module.exports = {
           }
         })
         vm.menu_model = [
-          {label: "All jobs"},
+          {},
+          {label: "All Job Names"},
           {separator: true},
           ...model
         ]
@@ -218,6 +223,9 @@ module.exports = {
 
     runJob(options) {
       const jobname = this.input_job
+      if (jobname.trim() === '') {
+        this.$toast.add({severity:'warn', summary: 'Please enter a job'});
+      }
 
       /* push to job history */
       this.pushJobHistory(jobname)
