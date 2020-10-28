@@ -9,7 +9,7 @@
       <InputText type="text" v-model="input_job" style="width: 70%;"
        placeholder="Run job" class="p-inputtext-sm p-m-2"/>
 
-      <SplitButton label="Run" :model="run_btn_model" @click="runJob"></SplitButton>
+      <SplitButton label="Run" :model="run_btn_model" @click="runJob()"></SplitButton>
     </div>
 
     <div class="p-col-12 p-md-12 p-lg-3 p-d-flex p-jc-end">
@@ -276,7 +276,7 @@ module.exports = {
         dry_run: dryrun || false,
         single_job: single || false,
         insist_job: pinID && true || false,
-        pin_id_job: pinID || '-1'
+        pin_id_job: pinID
       }
 
       axios.post(`${calabash_url}/runjob`, options)
