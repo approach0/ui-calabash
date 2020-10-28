@@ -14,9 +14,6 @@ const app = createApp(App)
 import InputSwitch from 'primevue/inputswitch'
 app.component('InputSwitch', InputSwitch)
 
-import Sidebar from 'primevue/sidebar'
-app.component('Sidebar', Sidebar)
-
 import Menu from 'primevue/menu'
 app.component('Menu', Menu)
 
@@ -52,5 +49,11 @@ app.component('Toolbar', Toolbar)
 
 import Dropdown from 'primevue/dropdown'
 app.component('Dropdown', Dropdown)
+
+import Sidebar from 'primevue/sidebar'
+app.component('Sidebar', Sidebar)
+
+import Checkbox from 'primevue/checkbox'
+app.component('Checkbox', Checkbox)
 
 app.mount('#app')

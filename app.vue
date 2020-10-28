@@ -76,7 +76,8 @@
                 </div>
               </template>
               <template v-slot:right>
-                <Button class="p-button-text" icon="las la-terminal"/>
+                <Button class="p-button-text" icon="las la-terminal"
+                 @click="onClickTaskLog(task.taskid)"/>
               </template>
             </Toolbar>
           </Fieldset>
@@ -85,6 +86,42 @@
       </div>
     </div>
   </div>
+
+  <Sidebar :visible="console_show" class="p-sidebar-lg" :showCloseIcon="false"
+           :position="console_full ? 'full' : 'bottom'">
+    <div class="p-d-flex p-flex-column">
+      <div class="p-grid p-fluid p-jc-between">
+        <h4 class="p-ml-4">{{console_title}}</h4>
+        <div>
+          <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
+                  @click="console_full=!console_full"/>
+          <Button class="p-button-text" icon="las la-times" @click="console_show=false"/>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1">
+        <pre class="console p-shadow-4">{{console_content}}</pre>
+      </div>
+
+      <div class="p-d-flex p-jc-end p-pt-4">
+
+        <div class="p-mr-5">
+          <span class="p-mr-1">
+            Auto refresh
+          </span>
+          <Checkbox v-model="console_refresh" :binary="true"/>
+        </div>
+
+        <div class="p-mr-5">
+          <span class="p-mr-1">
+            Stick to bottom
+          </span>
+          <Checkbox v-model="console_stickbt" :binary="true"/>
+        </div>
+
+      </div>
+    </div>
+  </Sidebar>
 
 </template>
 
@@ -167,20 +204,18 @@ module.exports = {
             this.runJob(true, false)
           }
         }
-      ]
+      ],
+      console_show: false,
+      console_full: false,
+      console_refresh: true,
+      console_stickbt: true,
+      console_title: 'Console',
+      console_content: ''
     }
   },
 
   methods: {
     chipIcon(taskJob) {
-      if (taskJob.alive)
-        return 'las la-running'
-      else if (taskJob.exitcode == 0)
-        return 'las la-check-square'
-      else if (taskJob.pid < 0)
-        return 'las la-clock'
-      else
-        return 'las la-exclamation-triangle'
       /* Example:
         jobname: "ucloud:source"
         alive: false
@@ -189,7 +224,14 @@ module.exports = {
         spawn_time: 1603881900897
         exit_time: 1603881900898
       */
-      return 'las la-bell'
+      if (taskJob.alive)
+        return 'las la-running'
+      else if (taskJob.exitcode == 0)
+        return 'las la-check'
+      else if (taskJob.pid < 0)
+        return 'las la-clock'
+      else
+        return 'las la-exclamation-triangle'
     },
 
     chipClass(taskJob) {
@@ -394,6 +436,43 @@ module.exports = {
 
     onClickTaskJob(taskID, itemIdx) {
       console.log(taskID, itemIdx)
+    },
+
+    onClickTaskLog(taskID) {
+      this.showConsole(`task/${taskID}`)
+    },
+
+    collectTaskJobLogs(res) {
+      const runList = res.data['task']['runList']
+      return runList.reduce((logs, taskJob) => {
+        logs += taskJob['log']
+        return logs
+      }, '')
+    },
+
+    showConsole(fetch_uri) {
+      /* fetch_uri: 'log/:logid' or 'task/:taskid' */
+      const vm = this
+      const [type, _] = fetch_uri.split('/')
+      vm.console_show = true
+      vm.console_full = false
+      vm.console_title = fetch_uri
+      vm.console_content = ''
+      vm.console_fetcher = function() {
+        axios.get(`${calabash_url}/get/${fetch_uri}`)
+        .then(res => {
+          if (type === 'log') {
+            const data = res.data
+            console.log(data)
+          } else if (type === 'task') {
+            vm.console_content = vm.collectTaskJobLogs(res)
+          }
+        })
+        .catch(err => {
+          vm.$toast.add({severity:'warn', summary: err.toString()});
+        })
+      }
+      setInterval(vm.console_fetcher, 1000)
     }
   }
 }
@@ -414,5 +493,14 @@ div.main {
 div.tasks {
   margin: 15px;
   width: 100%;
+}
+
+pre.console {
+  white-space: pre-wrap;
+  overflow: auto;
+  font-size: 14px;
+  background-color: #495057;
+  padding: 8px;
+  color: white;
 }
 </style>
