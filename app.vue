@@ -489,6 +489,9 @@ div.topbar {
   z-index:999;
   box-shadow: 0 0 4px rgba(0,0,0,.25);
   padding: 10px;
+  position: sticky;
+  top: 0;
+  background-color:var(--surface-c);
 }
 
 div.main {
