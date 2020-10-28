@@ -38,4 +38,7 @@ app.component('Dialog', Dialog)
 import Fieldset from 'primevue/fieldset'
 app.component('Fieldset', Fieldset)
 
+import Listbox from 'primevue/listbox'
+app.component('Listbox', Listbox)
+
 app.mount('#app')
