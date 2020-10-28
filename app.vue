@@ -5,7 +5,7 @@
     </div>
 
     <div class="p-col-12 p-md-8 p-lg-6 p-input-icon-left">
-      <i class="la la-play"></i>
+      <i class="pi pi-caret-right p-pl-3"></i>
       <InputText type="text" v-model="input_job" style="width: 70%;"
        placeholder="Run job" class="p-inputtext-sm p-m-2"/>
 
@@ -49,15 +49,37 @@
     </div>
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
-      <div class="main p-d-flex p-jc-center">
-
-        <Message style="position: absolute; top: 30px; max-width: 500px"
-                 v-if="msg.content" :severity="msg.type">
-          {{msg.content}}
-        </Message>
+      <div class="main">
 
         <div>
-          hello
+          <Message v-if="msg.content" :severity="msg.type">
+            {{msg.content}}
+          </Message>
+        </div>
+
+        <div class="tasks">
+          <Fieldset legend="Tasks">
+            <Toolbar>
+              <template v-slot:right>
+                <Dropdown v-model="taskFilter" :options="taskFilterOptions"
+                          optionLabel="optionName" placeholder="Filter tasks"/>
+              </template>
+            </Toolbar>
+
+            <Toolbar v-for="task in tasks" :key="task.taskid">
+              <template v-slot:left>
+                #{{task.taskid}}
+                <div style="width: 100%; overflow-x: auto;">
+                  <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
+                  :icon="chipIcon(job)" :class="chipClass(job)"
+                   @click="onClickTaskJob(task.taskid, idx)"/>
+                </div>
+              </template>
+              <template v-slot:right>
+              X
+              </template>
+            </Toolbar>
+          </Fieldset>
         </div>
 
       </div>
@@ -74,6 +96,7 @@ module.exports = {
   mounted: function() {
     this.attachDefaultTheme()
     this.updateJobList()
+    this.updateTaskList()
   },
 
   watch: {
@@ -87,11 +110,22 @@ module.exports = {
 
     selectedHistory: function(selectedJob) {
       this.input_job = selectedJob['jobname']
+    },
+
+    taskFilter: function(filter) {
+      this.updateTaskList()
     }
   },
 
   data: function() {
     return {
+      tasks: [],
+      taskFilter: {name: 'all'},
+      taskFilterOptions: [
+        {name: 'all', optionName: 'No filter'},
+        {name: 'active', optionName: 'Only active tasks'},
+        {name: 'unactive', optionName: 'Inactive tasks'}
+      ],
       nightTheme: false,
       input_job: '',
       menu_model: [],
@@ -134,6 +168,39 @@ module.exports = {
   },
 
   methods: {
+    chipIcon(taskJob) {
+      if (taskJob.alive)
+        return 'las la-running'
+      else if (taskJob.exitcode == 0)
+        return 'las la-check-square'
+      else if (taskJob.pid < 0)
+        return 'las la-clock'
+      else
+        return 'las la-exclamation-triangle'
+      /* Example:
+        jobname: "ucloud:source"
+        alive: false
+        exitcode: 0
+        pid: -1
+        spawn_time: 1603881900897
+        exit_time: 1603881900898
+        log: ""
+      */
+      return 'las la-bell'
+    },
+
+    chipClass(taskJob) {
+      const baseclass = "p-ml-2 p-mt-2 p-button-sm p-button-rounded "
+      if (taskJob.alive)
+        return baseclass + 'p-button-info'
+      else if (taskJob.exitcode == 0)
+        return baseclass + 'p-button-success'
+      else if (taskJob.pid < 0)
+        return baseclass + 'p-button-outlined p-button-text p-button-plain'
+      else
+        return baseclass + 'p-button-danger'
+    },
+
     changeTheme(cssFile) {
       let theme = document.getElementById("theme")
       theme.href = cssFile
@@ -263,6 +330,19 @@ module.exports = {
       }, 3000)
     },
 
+    updateTaskList() {
+      const vm = this
+      const taskFilter = this.taskFilter.name
+      axios.get(`${calabash_url}/get/tasks/${taskFilter}`)
+      .then(res => {
+        const data = res.data
+        vm.tasks = data.all_tasks.reverse()
+      })
+      .catch(err => {
+        vm.$toast.add({severity:'warn', summary: err.toString()});
+      })
+    },
+
     runJob(dryrun, single, pinID) {
       const jobname = this.input_job
       const vm = this
@@ -284,8 +364,7 @@ module.exports = {
         const ret = res.data
 
         vm.displayMsg(JSON.stringify(ret))
-
-        // ret['task_id']
+        vm.updateTaskList(ret['task_id'])
       })
       .catch(function (err) {
         this.$toast.add({severity:'warn', summary: err.toString()});
@@ -293,6 +372,10 @@ module.exports = {
 
       /* push to job history */
       this.pushJobHistory(jobname)
+    },
+
+    onClickTaskJob(taskID, itemIdx) {
+      console.log(taskID, itemIdx)
     }
   }
 }
@@ -307,6 +390,11 @@ div.topbar {
 
 div.main {
   position: relative;
+  width: 100%;
+}
+
+div.tasks {
+  margin: 15px;
   width: 100%;
 }
 </style>

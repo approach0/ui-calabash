@@ -47,4 +47,10 @@ app.component('Listbox', Listbox)
 import Message from 'primevue/message'
 app.component('Message', Message)
 
+import Toolbar from 'primevue/toolbar'
+app.component('Toolbar', Toolbar)
+
+import Dropdown from 'primevue/dropdown'
+app.component('Dropdown', Dropdown)
+
 app.mount('#app')
