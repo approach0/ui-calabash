@@ -112,7 +112,7 @@
       </div>
     </div>
 
-    <pre class="console p-shadow-4">{{console_content}}</pre>
+    <pre id="console" class="console p-shadow-4">{{console_content}}</pre>
   </Sidebar>
 
 </template>
@@ -202,7 +202,8 @@ module.exports = {
       console_refresh: true,
       console_stickbt: true,
       console_title: 'Console',
-      console_content: ''
+      console_content: '',
+      console_fetcher: null
     }
   },
 
@@ -450,7 +451,17 @@ module.exports = {
       vm.console_full = false
       vm.console_title = fetch_uri
       vm.console_content = ''
-      vm.console_fetcher = function() {
+
+      const fetcher = function() {
+        if (vm.console_stickbt) {
+          const element = document.getElementById("console")
+          if (element) element.scrollTop = element.scrollHeight
+        }
+
+        if (!vm.console_refresh) {
+          return
+        }
+
         axios.get(`${calabash_url}/get/${fetch_uri}`)
         .then(res => {
           if (type === 'log') {
@@ -463,8 +474,11 @@ module.exports = {
         .catch(err => {
           vm.$toast.add({severity:'warn', summary: err.toString()});
         })
-      }
-      setInterval(vm.console_fetcher, 1000)
+      };
+
+      if (vm.console_fetcher) clearInterval(vm.console_fetcher)
+      vm.console_fetcher = setInterval(fetcher, 1000)
+      setTimeout(fetcher, 0)
     }
   }
 }
