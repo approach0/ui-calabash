@@ -68,15 +68,15 @@
 
             <Toolbar v-for="task in tasks" :key="task.taskid">
               <template v-slot:left>
-                #{{task.taskid}}
                 <div style="width: 100%; overflow-x: auto;">
+                  <p>#{{task.taskid}}</p>
                   <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
                   :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
                   badgeClass="p-badge-warning" @click="onClickTaskJob(task.taskid, idx)"/>
                 </div>
               </template>
               <template v-slot:right>
-              X
+                <Button class="p-button-text" icon="las la-terminal"/>
               </template>
             </Toolbar>
           </Fieldset>
