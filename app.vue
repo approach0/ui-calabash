@@ -491,7 +491,7 @@ div.topbar {
   padding: 10px;
   position: sticky;
   top: 0;
-  background-color:var(--surface-c);
+  background-color:var(--surface-e);
 }
 
 div.main {
