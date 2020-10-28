@@ -89,38 +89,31 @@
 
   <Sidebar :visible="console_show" class="p-sidebar-lg" :showCloseIcon="false"
            :position="console_full ? 'full' : 'bottom'">
-    <div class="p-d-flex p-flex-column">
-      <div class="p-grid p-fluid p-jc-between">
-        <h4 class="p-ml-4">{{console_title}}</h4>
-        <div>
-          <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
-                  @click="console_full=!console_full"/>
-          <Button class="p-button-text" icon="las la-times" @click="console_show=false"/>
-        </div>
+    <div class="p-grid p-fluid p-jc-between console_head">
+      <h4 class="p-ml-4">{{console_title}}</h4>
+
+      <div class="p-d-flex p-ai-center">
+        <span class="p-mr-1">
+          Auto refresh
+        </span>
+        <Checkbox v-model="console_refresh" :binary="true"/>
       </div>
 
-      <div style="flex-grow: 1">
-        <pre class="console p-shadow-4">{{console_content}}</pre>
+      <div class="p-d-flex p-ai-center">
+        <span class="p-mr-1">
+          Stick to bottom
+        </span>
+        <Checkbox v-model="console_stickbt" :binary="true"/>
       </div>
 
-      <div class="p-d-flex p-jc-end p-pt-4">
-
-        <div class="p-mr-5">
-          <span class="p-mr-1">
-            Auto refresh
-          </span>
-          <Checkbox v-model="console_refresh" :binary="true"/>
-        </div>
-
-        <div class="p-mr-5">
-          <span class="p-mr-1">
-            Stick to bottom
-          </span>
-          <Checkbox v-model="console_stickbt" :binary="true"/>
-        </div>
-
+      <div>
+        <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
+                @click="console_full=!console_full"/>
+        <Button class="p-button-text" icon="las la-times" @click="console_show=false"/>
       </div>
     </div>
+
+    <pre class="console p-shadow-4">{{console_content}}</pre>
   </Sidebar>
 
 </template>
@@ -499,8 +492,17 @@ pre.console {
   white-space: pre-wrap;
   overflow: auto;
   font-size: 14px;
-  background-color: #495057;
+  background-color: #424443;
   padding: 8px;
   color: white;
+  height: 100%;
+}
+
+div.console_head {
+  height: 3rem;
+}
+
+div.p-sidebar-content {
+  height: calc(100% - 3rem);
 }
 </style>
