@@ -87,7 +87,7 @@
   </div>
 
   <Sidebar :visible="console_show" class="p-sidebar-lg" :showCloseIcon="false"
-           :position="console_full ? 'full' : 'bottom'">
+           :position="console_full ? 'full' : 'bottom'" :modal="false">
     <div class="p-grid p-fluid p-jc-between console_head">
       <h4 class="p-ml-4">{{console_title}}</h4>
 
