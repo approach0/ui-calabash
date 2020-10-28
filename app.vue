@@ -60,6 +60,8 @@
           <Fieldset legend="Tasks">
             <Toolbar>
               <template v-slot:right>
+                <Button class="p-button-raised p-mr-4" label="Master Logs"
+                 icon="las la-terminal" @click="onClickJobLog('MASTER')"/>
                 <Dropdown v-model="taskFilter" :options="taskFilterOptions"
                           optionLabel="optionName" placeholder="Filter tasks"/>
               </template>
@@ -435,6 +437,10 @@ module.exports = {
       this.showConsole(`task/${taskID}`)
     },
 
+    onClickJobLog(logID) {
+      this.showConsole(`log/${logID}`)
+    },
+
     collectTaskJobLogs(res) {
       const runList = res.data['task']['runList']
       return runList.reduce((logs, taskJob) => {
@@ -466,7 +472,7 @@ module.exports = {
         .then(res => {
           if (type === 'log') {
             const data = res.data
-            console.log(data)
+            vm.console_content = data.log
           } else if (type === 'task') {
             vm.console_content = vm.collectTaskJobLogs(res)
           }
