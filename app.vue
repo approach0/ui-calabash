@@ -71,8 +71,8 @@
                 #{{task.taskid}}
                 <div style="width: 100%; overflow-x: auto;">
                   <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
-                  :icon="chipIcon(job)" :class="chipClass(job)"
-                   @click="onClickTaskJob(task.taskid, idx)"/>
+                  :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
+                  badgeClass="p-badge-warning" @click="onClickTaskJob(task.taskid, idx)"/>
                 </div>
               </template>
               <template v-slot:right>
@@ -94,9 +94,13 @@ const axios = require('axios')
 
 module.exports = {
   mounted: function() {
-    this.attachDefaultTheme()
-    this.updateJobList()
-    this.updateTaskList()
+    const vm = this
+    vm.attachDefaultTheme()
+    vm.updateJobList()
+
+    setInterval(function() {
+      vm.updateTaskList()
+    }, 1000)
   },
 
   watch: {
@@ -120,7 +124,7 @@ module.exports = {
   data: function() {
     return {
       tasks: [],
-      taskFilter: {name: 'all'},
+      taskFilter: {name: 'active'},
       taskFilterOptions: [
         {name: 'all', optionName: 'No filter'},
         {name: 'active', optionName: 'Only active tasks'},
@@ -184,7 +188,6 @@ module.exports = {
         pid: -1
         spawn_time: 1603881900897
         exit_time: 1603881900898
-        log: ""
       */
       return 'las la-bell'
     },
@@ -199,6 +202,21 @@ module.exports = {
         return baseclass + 'p-button-outlined p-button-text p-button-plain'
       else
         return baseclass + 'p-button-danger'
+    },
+
+    chipBadge(taskJob) {
+      if (!taskJob.alive && taskJob.pid >= 0) {
+        const spawn_time = taskJob.spawn_time
+        const exit_time = taskJob.exit_time
+        const time_cost = Math.round((exit_time - spawn_time) / 1000)
+        if (time_cost == 0) {
+          return ''
+        } else {
+          return `${time_cost}`
+        }
+      } else {
+        return ''
+      }
     },
 
     changeTheme(cssFile) {
