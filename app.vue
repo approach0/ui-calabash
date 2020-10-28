@@ -48,11 +48,19 @@
       <Menu :model="menu_model" style="width:100%"/>
     </div>
 
-    <div style="flex-grow: 1;">
+    <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
+      <div class="main p-d-flex p-jc-center">
 
-      <div class="p-d-flex p-jc-center">
+        <Message style="position: absolute; top: 30px; max-width: 500px"
+                 v-if="msg.content" :severity="msg.type">
+          {{msg.content}}
+        </Message>
+
+        <div>
+          hello
+        </div>
+
       </div>
-
     </div>
   </div>
 
@@ -92,6 +100,10 @@ module.exports = {
       dialog_show: false,
       dialog_title: '',
       job_job_description: {},
+      msg: {
+        content: '',
+        type: ''
+      },
       run_btn_model: [
         {
           label: 'Show job',
@@ -101,22 +113,21 @@ module.exports = {
         {
           label: 'Run as single job',
           icon: 'pi pi-chevron-circle-right',
-          command: this.showJob
+          command: () => {
+            this.runJob(false, true)
+          }
         },
         {
-          label: 'Run as insisting job',
-          icon: 'pi pi-angle-double-right',
-          command: this.showJob
-        },
-        {
-          label: 'Run as pinned job',
+          label: 'Run as status job',
           icon: 'pi pi-check-square',
           command: this.showJob
         },
         {
           label: 'Dry run',
           icon: 'pi pi-minus-circle',
-          command: this.showJob
+          command: () => {
+            this.runJob(true, false)
+          }
         }
       ]
     }
@@ -240,11 +251,45 @@ module.exports = {
       }
     },
 
-    runJob(options) {
+    displayMsg(content, type) {
+      this.msg = {
+        content: content,
+        type: type || 'success'
+      }
+
+      const vm = this
+      setTimeout(function() {
+        vm.msg = {content: ''}
+      }, 3000)
+    },
+
+    runJob(dryrun, single, pinID) {
       const jobname = this.input_job
+      const vm = this
       if (jobname.trim() === '') {
         this.$toast.add({severity:'warn', summary: 'Please enter a job'});
+        return
       }
+
+      const options = {
+        goal: jobname,
+        dry_run: dryrun || false,
+        single_job: single || false,
+        insist_job: pinID && true || false,
+        pin_id_job: pinID || '-1'
+      }
+
+      axios.post(`${calabash_url}/runjob`, options)
+      .then(function (res) {
+        const ret = res.data
+
+        vm.displayMsg(JSON.stringify(ret))
+
+        // ret['task_id']
+      })
+      .catch(function (err) {
+        this.$toast.add({severity:'warn', summary: err.toString()});
+      })
 
       /* push to job history */
       this.pushJobHistory(jobname)
@@ -258,5 +303,10 @@ div.topbar {
   z-index:999;
   box-shadow: 0 0 4px rgba(0,0,0,.25);
   padding: 10px;
+}
+
+div.main {
+  position: relative;
+  width: 100%;
 }
 </style>
