@@ -13,12 +13,17 @@
     </div>
 
     <div class="p-col-12 p-md-12 p-lg-3 p-d-flex p-jc-end">
-      <i class="las la-sun"></i>
-      <i class="hspacer"></i>
-      <InputSwitch v-model="nightTheme"/>
-      <i class="hspacer"></i>
-      <i class="las la-moon"></i>
+      <div class="p-d-flex p-ai-center p-mr-4">
+        <i class="las la-sun"></i>
+        <i class="hspacer"></i>
+        <InputSwitch v-model="nightTheme"/>
+        <i class="hspacer"></i>
+        <i class="las la-moon"></i>
+      </div>
+
+      <Button icon="pi pi-cog" class="p-button-rounded" @click="showConfigs"/>
     </div>
+
   </div>
 
   <Toast position="top-right"/>
@@ -206,6 +211,20 @@ module.exports = {
         vm.dialog_show = true
         vm.job_description = data.props
         vm.dialog_title = data.jobname
+      })
+      .catch(err => {
+        vm.$toast.add({severity:'warn', summary: err.toString()});
+      })
+    },
+
+    showConfigs() {
+      const vm = this
+      axios.get(`${calabash_url}/get/config`)
+      .then(res => {
+        const data = res.data
+        vm.dialog_show = true
+        vm.job_description = data
+        vm.dialog_title = 'Configs'
       })
       .catch(err => {
         vm.$toast.add({severity:'warn', summary: err.toString()});

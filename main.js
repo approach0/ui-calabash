@@ -29,6 +29,9 @@ app.use(ToastService)
 import Toast from 'primevue/toast'
 app.component('Toast', Toast)
 
+import Button from 'primevue/button'
+app.component('Button', Button)
+
 import SplitButton from 'primevue/splitbutton'
 app.component('SplitButton', SplitButton)
 
