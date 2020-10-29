@@ -166,6 +166,7 @@ module.exports = {
       selectedHistory: '',
       jobHistory: [],
       dialog_show: false,
+      lastDisplayError: null,
       dialog_title: '',
       job_job_description: {},
       run_btn_model: [
@@ -266,12 +267,24 @@ module.exports = {
     },
 
     displayMessage(type, summary, detail, life) {
-      this.$toast.add({
+      const displayLife = 5000
+      const vm = this
+
+      if (vm.lastDisplayError !== null && type === 'error') {
+        /* to avoid too frequent error messages */
+        return
+      }
+
+      vm.$toast.add({
         severity: type || 'success',
         summary: summary,
         detail: detail,
-        life: life || 5000
+        life: life || displayLife
       })
+
+      vm.lastDisplayError = setTimeout(function() {
+        vm.lastDisplayError = null
+      }, displayLife)
     },
 
     extractRequiredArgs(exec) {
