@@ -9,8 +9,9 @@
       <i class="pi pi-caret-right p-pl-3"></i>
       <InputText type="text" v-model="input_job" style="flex-grow: 1;"
        placeholder="Run job" class="p-inputtext-sm p-m-2"/>
-      <Button label="Logs" class="p-mr-2 p-button-secondary" @click="onClickLog('job', input_job)"/>
-      <SplitButton label="Run" :model="run_btn_model" @click="runJob()"></SplitButton>
+      <SplitButton label="Run" :model="run_btn_model" @click="runJob()"/>
+      <SplitButton label="Logs" class="p-ml-2 p-button-secondary" :model="log_btn_model"
+       @click="onClickLog('job', input_job)"/>
     </div>
 
     <div class="p-col-12 p-md-12 p-lg-3 p-d-flex p-jc-end">
@@ -169,23 +170,20 @@ module.exports = {
       lastDisplayError: null,
       dialog_title: '',
       job_job_description: {},
-      run_btn_model: [
+      log_btn_model: [
         {
           label: 'Show job',
           icon: 'pi pi-file',
           command: this.showJob
-        },
+        }
+      ],
+      run_btn_model: [
         {
           label: 'Run as single job',
           icon: 'pi pi-chevron-circle-right',
           command: () => {
             this.runJob(false, true)
           }
-        },
-        {
-          label: 'Run as status job',
-          icon: 'pi pi-check-square',
-          command: this.showJob
         },
         {
           label: 'Dry run',
