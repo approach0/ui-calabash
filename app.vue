@@ -8,6 +8,7 @@
       <i class="pi pi-caret-right p-pl-3"></i>
       <InputText type="text" v-model="input_job" style="flex-grow: 1;"
        placeholder="Run job" class="p-inputtext-sm p-m-2"/>
+      <Button label="Logs" class="p-mr-2 p-button-secondary" @click="onClickLog('job', input_job)"/>
       <SplitButton label="Run" :model="run_btn_model" @click="runJob()"></SplitButton>
     </div>
 
@@ -54,7 +55,8 @@
             <Toolbar>
               <template v-slot:right>
                 <Button class="p-button-raised p-mr-4" label="Master Logs"
-                 icon="las la-terminal" @click="onClickJobLog('MASTER')"/>
+                 icon="las la-terminal" @click="showConsole('log/MASTER')"/>
+
                 <Dropdown v-model="taskFilter" :options="taskFilterOptions"
                           optionLabel="optionName" placeholder="Filter tasks"/>
               </template>
@@ -66,12 +68,14 @@
                   <p>#{{task.taskid}}</p>
                   <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
                   :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
-                  badgeClass="p-badge-warning" @click="onClickTaskJob(task.taskid, idx)"/>
+                  badgeClass="p-badge-warning" @click="onClickTaskLog(task.taskid, idx)"/>
                 </div>
               </template>
               <template v-slot:right>
                 <Button class="p-button-text" icon="las la-terminal"
                  @click="onClickTaskLog(task.taskid)"/>
+                <Button class="p-button-text p-ml-2" icon="las la-user-secret"
+                 @click="onClickLog('task', task.taskid)"/>
               </template>
             </Toolbar>
           </Fieldset>
@@ -388,7 +392,7 @@ module.exports = {
       const jobname = this.input_job
       const vm = this
       if (jobname.trim() === '') {
-        vm.displayMessage('warn', 'Please enter a job')
+        vm.displayMessage('warn', 'Please enter a job name')
         return
       }
 
@@ -416,27 +420,27 @@ module.exports = {
       this.pushJobHistory(jobname)
     },
 
-    onClickTaskJob(taskID, itemIdx) {
-      console.log(taskID, itemIdx)
+    onClickTaskLog(taskID, idx) {
+      this.showConsole(`task/${taskID}`, idx)
     },
 
-    onClickTaskLog(taskID) {
-      this.showConsole(`task/${taskID}`)
+    onClickLog(type, id) {
+      if (id.trim() === '') {
+        this.displayMessage('warn', 'Please enter a log ID')
+        return
+      }
+
+      this.showConsole(`log/${type}-${id}`)
     },
 
-    onClickJobLog(logID) {
-      this.showConsole(`log/${logID}`)
-    },
-
-    collectTaskJobLogs(res) {
-      const runList = res.data['task']['runList']
+    collectTaskJobLogs(runList) {
       return runList.reduce((logs, taskJob) => {
         logs += taskJob['log']
         return logs
       }, '')
     },
 
-    showConsole(fetch_uri) {
+    showConsole(fetch_uri, idx) {
       /* fetch_uri: 'log/:logid' or 'task/:taskid' */
       const vm = this
       const [type, _] = fetch_uri.split('/')
@@ -461,7 +465,12 @@ module.exports = {
             const data = res.data
             vm.console_content = data.log
           } else if (type === 'task') {
-            vm.console_content = vm.collectTaskJobLogs(res)
+            const runList = res.data['task']['runList']
+            if (idx) {
+              vm.console_content = runList[idx]['log']
+            } else {
+              vm.console_content = vm.collectTaskJobLogs(runList)
+            }
           }
         })
         .catch(err => {
