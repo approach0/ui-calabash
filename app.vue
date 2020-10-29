@@ -22,7 +22,7 @@
         <i class="las la-moon"></i>
       </div>
 
-      <Button icon="pi pi-cog" class="p-button-rounded" @click="showConfigs"/>
+      <Button icon="pi pi-cog" class="p-button-text p-button-rounded" @click="showConfigs"/>
     </div>
   </div>
 
