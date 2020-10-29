@@ -1,7 +1,8 @@
 <template>
   <div class="p-grid p-jc-between p-ai-center topbar">
-    <div class="p-col-12 p-md-4 p-lg-3">
-      <h2>Calabash Panel</h2>
+    <div class="p-col-12 p-md-4 p-lg-3 p-d-flex p-ai-center">
+      <img style="width: 64px; height: 64px;" :src="logo"/>
+      <h2 class="p-ml-4">Calabash Panel</h2>
     </div>
 
     <div class="p-col-12 p-md-8 p-lg-6 p-input-icon-left p-d-flex p-ai-center">
@@ -151,6 +152,7 @@ module.exports = {
 
   data: function() {
     return {
+      logo: require('./resource/logo-128.png'),
       tasks: [],
       taskFilter: {name: 'active'},
       taskFilterOptions: [
@@ -326,8 +328,7 @@ module.exports = {
           }
         })
         vm.menu_model = [
-          {},
-          {label: "All Job Names"},
+          {label: 'All Jobs'},
           {separator: true},
           ...model
         ]

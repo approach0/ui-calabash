@@ -103,7 +103,7 @@ module.exports = (env, options) => {
     },
     plugins: [
       new HtmlWebpackPlugin({
-        title: 'Title',
+        title: 'Calabash',
         favicon: "./resource/favicon.ico",
         chunks: ['app'], /* stop injecting css */
         inject: true,
