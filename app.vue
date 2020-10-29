@@ -518,6 +518,7 @@ pre.console {
   padding: 8px;
   color: white;
   height: 100%;
+  font-family: InconsolataMono, "Courier New", Courier, monospace;
 }
 
 div.console_head {
