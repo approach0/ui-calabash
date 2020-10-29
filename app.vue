@@ -10,8 +10,8 @@
       <InputText type="text" v-model="input_job" style="flex-grow: 1;"
        placeholder="Run job" class="p-inputtext-sm p-m-2"/>
       <SplitButton label="Run" :model="run_btn_model" @click="runJob()"/>
-      <SplitButton label="Logs" class="p-ml-2 p-button-secondary" :model="log_btn_model"
-       @click="onClickLog('job', input_job)"/>
+      <SplitButton label="Info" class="p-ml-2 p-button-secondary" :model="log_btn_model"
+       @click="showJob()"/>
     </div>
 
     <div class="p-col-12 p-md-12 p-lg-3 p-d-flex p-jc-end">
@@ -174,7 +174,9 @@ module.exports = {
         {
           label: 'Show job',
           icon: 'pi pi-file',
-          command: this.showJob
+          command: () => {
+            this.onClickLog('job', this.input_job)
+          }
         }
       ],
       run_btn_model: [
@@ -339,7 +341,7 @@ module.exports = {
           }
         })
         vm.menu_model = [
-          {label: 'All Jobs'},
+          {label: 'Job List', icon: 'pi pi-fw pi-list'},
           {separator: true},
           ...model
         ]
@@ -352,6 +354,12 @@ module.exports = {
     showJob() {
       const jobname = this.input_job
       const vm = this
+
+      if (jobname.trim() === '') {
+        vm.displayMessage('warn', 'Please enter a job name')
+        return
+      }
+
       axios.get(`${calabash_url}/get/job/${jobname}`)
       .then(res => {
         const data = res.data
