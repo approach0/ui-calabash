@@ -22,7 +22,6 @@
 
       <Button icon="pi pi-cog" class="p-button-rounded" @click="showConfigs"/>
     </div>
-
   </div>
 
   <Toast position="top-right"/>
@@ -49,12 +48,6 @@
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
-
-        <div>
-          <Message v-if="msg.content" :severity="msg.type">
-            {{msg.content}}
-          </Message>
-        </div>
 
         <div class="tasks">
           <Fieldset legend="Tasks">
@@ -169,10 +162,6 @@ module.exports = {
       dialog_show: false,
       dialog_title: '',
       job_job_description: {},
-      msg: {
-        content: '',
-        type: ''
-      },
       run_btn_model: [
         {
           label: 'Show job',
@@ -270,6 +259,15 @@ module.exports = {
       document.head.appendChild(theme)
     },
 
+    displayMessage(type, summary, detail, life) {
+      this.$toast.add({
+        severity: type || 'success',
+        summary: summary,
+        detail: detail,
+        life: life || 5000
+      })
+    },
+
     extractRequiredArgs(exec) {
       let exes = exec
       if (!Array.isArray(exes)) {
@@ -331,7 +329,7 @@ module.exports = {
         ]
       })
       .catch(err => {
-        vm.$toast.add({severity:'warn', summary: err.toString()});
+        vm.displayMessage('error', 'Error', err.toString())
       })
     },
 
@@ -346,7 +344,7 @@ module.exports = {
         vm.dialog_title = data.jobname
       })
       .catch(err => {
-        vm.$toast.add({severity:'warn', summary: err.toString()});
+        vm.displayMessage('error', 'Error', err.toString())
       })
     },
 
@@ -360,7 +358,7 @@ module.exports = {
         vm.dialog_title = 'Configs'
       })
       .catch(err => {
-        vm.$toast.add({severity:'warn', summary: err.toString()});
+        vm.displayMessage('error', 'Error', err.toString())
       })
     },
 
@@ -373,18 +371,6 @@ module.exports = {
       }
     },
 
-    displayMsg(content, type) {
-      this.msg = {
-        content: content,
-        type: type || 'success'
-      }
-
-      const vm = this
-      setTimeout(function() {
-        vm.msg = {content: ''}
-      }, 3000)
-    },
-
     updateTaskList() {
       const vm = this
       const taskFilter = this.taskFilter.name
@@ -394,7 +380,7 @@ module.exports = {
         vm.tasks = data.all_tasks.reverse()
       })
       .catch(err => {
-        vm.$toast.add({severity:'warn', summary: err.toString()});
+        vm.displayMessage('error', 'Error', err.toString())
       })
     },
 
@@ -402,7 +388,7 @@ module.exports = {
       const jobname = this.input_job
       const vm = this
       if (jobname.trim() === '') {
-        this.$toast.add({severity:'warn', summary: 'Please enter a job'});
+        vm.displayMessage('warn', 'Please enter a job')
         return
       }
 
@@ -418,11 +404,12 @@ module.exports = {
       .then(function (res) {
         const ret = res.data
 
-        vm.displayMsg(JSON.stringify(ret))
+        vm.displayMessage('success', jobname, JSON.stringify(ret))
+
         vm.updateTaskList(ret['task_id'])
       })
       .catch(function (err) {
-        this.$toast.add({severity:'warn', summary: err.toString()});
+        vm.displayMessage('error', 'Error', err.toString())
       })
 
       /* push to job history */
@@ -478,7 +465,7 @@ module.exports = {
           }
         })
         .catch(err => {
-          vm.$toast.add({severity:'warn', summary: err.toString()});
+          vm.displayMessage('error', 'Error', err.toString())
         })
       };
 

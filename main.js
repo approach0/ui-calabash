@@ -41,9 +41,6 @@ app.component('Fieldset', Fieldset)
 import Listbox from 'primevue/listbox'
 app.component('Listbox', Listbox)
 
-import Message from 'primevue/message'
-app.component('Message', Message)
-
 import Toolbar from 'primevue/toolbar'
 app.component('Toolbar', Toolbar)
 
