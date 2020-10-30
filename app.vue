@@ -52,36 +52,38 @@
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
 
-        <div class="tasks">
-          <Fieldset legend="Tasks">
-            <Toolbar>
-              <template v-slot:right>
-                <Button class="p-button-raised p-mr-4" label="Master Logs"
-                 icon="las la-terminal" @click="showConsole('log/MASTER')"/>
+        <Fieldset legend="Cluster" class="mainfield">
+          <Tree :value="clusterTree"></Tree>
+        </Fieldset>
 
-                <Dropdown v-model="taskFilter" :options="taskFilterOptions"
-                          optionLabel="optionName" placeholder="Filter tasks"/>
-              </template>
-            </Toolbar>
+        <Fieldset legend="Tasks" class="mainfield">
+          <Toolbar>
+            <template v-slot:right>
+              <Button class="p-button-raised p-mr-4" label="Master Logs"
+               icon="las la-terminal" @click="showConsole('log/MASTER')"/>
 
-            <Toolbar v-for="task in tasks" :key="task.taskid">
-              <template v-slot:left>
-                <div style="width: 100%; overflow-x: auto;">
-                  <p>#{{task.taskid}}</p>
-                  <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
-                  :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
-                  badgeClass="p-badge-warning" @click="onClickTaskLog(task.taskid, idx)"/>
-                </div>
-              </template>
-              <template v-slot:right>
-                <Button class="p-button-text" icon="las la-terminal"
-                 @click="onClickTaskLog(task.taskid)"/>
-                <Button class="p-button-text p-ml-2" icon="las la-user-secret"
-                 @click="onClickLog('task', task.taskid)"/>
-              </template>
-            </Toolbar>
-          </Fieldset>
-        </div>
+              <Dropdown v-model="taskFilter" :options="taskFilterOptions"
+                        optionLabel="optionName" placeholder="Filter tasks"/>
+            </template>
+          </Toolbar>
+
+          <Toolbar v-for="task in tasks" :key="task.taskid">
+            <template v-slot:left>
+              <div style="width: 100%; overflow-x: auto;">
+                <p>#{{task.taskid}}</p>
+                <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
+                :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
+                badgeClass="p-badge-warning" @click="onClickTaskLog(task.taskid, idx)"/>
+              </div>
+            </template>
+            <template v-slot:right>
+              <Button class="p-button-text" icon="las la-terminal"
+               @click="onClickTaskLog(task.taskid)"/>
+              <Button class="p-button-text p-ml-2" icon="las la-user-secret"
+               @click="onClickLog('task', task.taskid)"/>
+            </template>
+          </Toolbar>
+        </Fieldset>
 
       </div>
     </div>
@@ -197,6 +199,58 @@ module.exports = {
           }
         }
       ],
+      clusterTree:  [
+        {
+            "key": "0",
+            "label": "Documents",
+            "data": "Documents Folder",
+            "icon": "pi pi-fw pi-inbox",
+            "children": [{
+                "key": "0-0",
+                "label": "Work",
+                "data": "Work Folder",
+                "icon": "pi pi-fw pi-cog",
+                "children": [{ "key": "0-0-0", "label": "Expenses.doc", "icon": "pi pi-fw pi-file", "data": "Expenses Document" }, { "key": "0-0-1", "label": "Resume.doc", "icon": "pi pi-fw pi-file", "data": "Resume Document" }]
+            },
+            {
+                "key": "0-1",
+                "label": "Home",
+                "data": "Home Folder",
+                "icon": "pi pi-fw pi-home",
+                "children": [{ "key": "0-1-0", "label": "Invoices.txt", "icon": "pi pi-fw pi-file", "data": "Invoices for this month" }]
+            }]
+        },
+        {
+            "key": "1",
+            "label": "Events",
+            "data": "Events Folder",
+            "icon": "pi pi-fw pi-calendar",
+            "children": [
+                { "key": "1-0", "label": "Meeting", "icon": "pi pi-fw pi-calendar-plus", "data": "Meeting" },
+                { "key": "1-1", "label": "Product Launch", "icon": "pi pi-fw pi-calendar-plus", "data": "Product Launch" },
+                { "key": "1-2", "label": "Report Review", "icon": "pi pi-fw pi-calendar-plus", "data": "Report Review" }]
+        },
+        {
+            "key": "2",
+            "label": "Movies",
+            "data": "Movies Folder",
+            "icon": "pi pi-fw pi-star",
+            "children": [{
+                "key": "2-0",
+                "icon": "pi pi-fw pi-star",
+                "label": "Al Pacino",
+                "data": "Pacino Movies",
+                "children": [{ "key": "2-0-0", "label": "Scarface", "icon": "pi pi-fw pi-video", "data": "Scarface Movie" }, { "key": "2-0-1", "label": "Serpico", "icon": "pi pi-fw pi-video", "data": "Serpico Movie" }]
+            },
+            {
+                "key": "2-1",
+                "label": "Robert De Niro",
+                "icon": "pi pi-fw pi-star",
+                "data": "De Niro Movies",
+                "children": [{ "key": "2-1-0", "label": "Goodfellas", "icon": "pi pi-fw pi-video", "data": "Goodfellas Movie" }, { "key": "2-1-1", "label": "Untouchables", "icon": "pi pi-fw pi-video", "data": "Untouchables Movie" }]
+            }]
+        }
+    ],
       console_show: false,
       console_full: false,
       console_refresh: true,
@@ -523,7 +577,7 @@ div.main {
   width: 100%;
 }
 
-div.tasks {
+.mainfield {
   margin: 15px;
   width: 100%;
 }

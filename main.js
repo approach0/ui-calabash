@@ -53,4 +53,7 @@ app.component('Sidebar', Sidebar)
 import Checkbox from 'primevue/checkbox'
 app.component('Checkbox', Checkbox)
 
+import Tree from 'primevue/tree'
+app.component('Tree', Tree)
+
 app.mount('#app')
