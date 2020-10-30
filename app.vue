@@ -53,6 +53,12 @@
       <div class="main">
 
         <Fieldset legend="Cluster" class="mainfield">
+          <Toolbar>
+            <template v-slot:right>
+              <Button label="Test" @click="test()"/>
+            </template>
+          </Toolbar>
+
           <Tree :value="clusterTree"></Tree>
         </Fieldset>
 
@@ -152,6 +158,25 @@ module.exports = {
 
     taskFilter: function(filter) {
       this.updateTaskList()
+    },
+
+    tasks: function(newTasks) {
+      vm = this
+      newTasks.forEach((task) => {
+        const runList = task.runList
+        if (task.taskid == 1) {
+          const log = runList[1].log
+          vm.cluster_iaas_nodes = vm.parseJSON(log, vm.cluster_iaas_nodes)
+
+        } else if (task.taskid == 2) {
+          const log = runList[0].log
+          vm.cluster_swarm_nodes = vm.parseJSON(log, vm.cluster_swarm_nodes)
+
+        } else if (task.taskid == 3) {
+          const log = runList[0].log
+          vm.cluster_services = vm.parseJSON(log, vm.cluster_services)
+        }
+      })
     }
   },
 
@@ -162,8 +187,7 @@ module.exports = {
       taskFilter: {name: 'active'},
       taskFilterOptions: [
         {name: 'all', optionName: 'No filter'},
-        {name: 'active', optionName: 'Only active tasks'},
-        {name: 'unactive', optionName: 'Inactive tasks'}
+        {name: 'active', optionName: 'Only active tasks'}
       ],
       nightTheme: false,
       input_job: '',
@@ -201,26 +225,6 @@ module.exports = {
       ],
       clusterTree:  [
         {
-            "key": "0",
-            "label": "Documents",
-            "data": "Documents Folder",
-            "icon": "pi pi-fw pi-inbox",
-            "children": [{
-                "key": "0-0",
-                "label": "Work",
-                "data": "Work Folder",
-                "icon": "pi pi-fw pi-cog",
-                "children": [{ "key": "0-0-0", "label": "Expenses.doc", "icon": "pi pi-fw pi-file", "data": "Expenses Document" }, { "key": "0-0-1", "label": "Resume.doc", "icon": "pi pi-fw pi-file", "data": "Resume Document" }]
-            },
-            {
-                "key": "0-1",
-                "label": "Home",
-                "data": "Home Folder",
-                "icon": "pi pi-fw pi-home",
-                "children": [{ "key": "0-1-0", "label": "Invoices.txt", "icon": "pi pi-fw pi-file", "data": "Invoices for this month" }]
-            }]
-        },
-        {
             "key": "1",
             "label": "Events",
             "data": "Events Folder",
@@ -251,6 +255,11 @@ module.exports = {
             }]
         }
     ],
+
+      cluster_iaas_nodes: [],
+      cluster_swarm_nodes: [],
+      cluster_services: [],
+
       console_show: false,
       console_full: false,
       console_refresh: true,
@@ -262,6 +271,19 @@ module.exports = {
   },
 
   methods: {
+    parseJSON(json, oldObj) {
+      if (json.trim() === '')
+        return oldObj
+
+      try {
+        const obj = JSON.parse(json)
+        return obj
+      } catch (err) {
+        vm.displayMessage('error', err.toString(), JSON)
+        return oldObj
+      }
+    },
+
     chipIcon(taskJob) {
       /* Example:
         jobname: "ucloud:source"
@@ -557,6 +579,12 @@ module.exports = {
       if (vm.console_fetcher) clearInterval(vm.console_fetcher)
       vm.console_fetcher = setInterval(fetcher, 1000)
       setTimeout(fetcher, 0)
+    },
+
+    test() {
+      console.log(this.cluster_iaas_nodes[0])
+      console.log(this.cluster_swarm_nodes)
+      console.log(this.cluster_services)
     }
   }
 }
