@@ -93,14 +93,16 @@
       <h4 class="p-ml-4">{{console_title}}</h4>
 
       <div class="p-d-flex p-ai-center">
-        <span class="p-mr-1">
+        <span class="p-mr-2">
+          <i class="pi pi-refresh"></i>
           Auto refresh
         </span>
         <Checkbox v-model="console_refresh" :binary="true"/>
       </div>
 
       <div class="p-d-flex p-ai-center">
-        <span class="p-mr-1">
+        <span class="p-mr-2">
+          <i class="pi pi-sort-down"></i>
           Stick to bottom
         </span>
         <Checkbox v-model="console_stickbt" :binary="true"/>
