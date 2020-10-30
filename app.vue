@@ -468,7 +468,7 @@ module.exports = {
       const [type, _] = fetch_uri.split('/')
       vm.console_show = true
       vm.console_full = false
-      vm.console_title = fetch_uri
+      vm.console_title = fetch_uri + (idx === undefined ? '' : `/job[${idx}]`)
       vm.console_content = ''
 
       const fetcher = function() {
@@ -488,10 +488,10 @@ module.exports = {
             vm.console_content = data.log
           } else if (type === 'task') {
             const runList = res.data['task']['runList']
-            if (idx) {
-              vm.console_content = runList[idx]['log']
-            } else {
+            if (idx === undefined) {
               vm.console_content = vm.collectTaskJobLogs(runList)
+            } else {
+              vm.console_content = runList[idx]['log']
             }
           }
         })
