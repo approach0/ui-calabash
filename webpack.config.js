@@ -34,13 +34,11 @@ module.exports = (env, options) => {
       rules: [
         {
           test: /\.js$/,
-          exclude: /node_modules/,
           use: [
-          {
-            loader: "babel-loader",
-            options: { presets: ["@babel/preset-env"] }
-          },
-          //'vue-loader',
+            {
+              loader: "babel-loader",
+              options: { presets: ["@babel/preset-env"] }
+            }
           ]
         },
         { test: /\.vue$/, enforce: 'pre', use: 'eslint-loader', exclude: /node_modules/},

@@ -53,4 +53,19 @@ app.component('Sidebar', Sidebar)
 import Checkbox from 'primevue/checkbox'
 app.component('Checkbox', Checkbox)
 
+import TabView from 'primevue/tabview'
+app.component('TabView', TabView)
+
+import TabPanel from 'primevue/tabpanel'
+app.component('TabPanel', TabPanel)
+
+import DataTable from 'primevue/datatable'
+app.component('DataTable', DataTable)
+
+import Column from 'primevue/column'
+app.component('Column', Column)
+
+import Tree from 'primevue/tree'
+app.component('Tree', Tree)
+
 app.mount('#app')

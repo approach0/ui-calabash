@@ -51,37 +51,100 @@
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
+        <Fieldset legend="Quick View" class="mainfield">
+          <Toolbar>
+            <template v-slot:right>
+              <Button label="Test" @click="test()"/>
+            </template>
+          </Toolbar>
 
-        <div class="tasks">
-          <Fieldset legend="Tasks">
-            <Toolbar>
-              <template v-slot:right>
-                <Button class="p-button-raised p-mr-4" label="Master Logs"
-                 icon="las la-terminal" @click="showConsole('log/MASTER')"/>
+          <Tree :value="clusterTree"></Tree>
+        </Fieldset>
 
-                <Dropdown v-model="taskFilter" :options="taskFilterOptions"
-                          optionLabel="optionName" placeholder="Filter tasks"/>
-              </template>
-            </Toolbar>
+        <Fieldset legend="Server List" class="mainfield">
+          <TabView>
 
-            <Toolbar v-for="task in tasks" :key="task.taskid">
-              <template v-slot:left>
-                <div style="width: 100%; overflow-x: auto;">
-                  <p>#{{task.taskid}}</p>
-                  <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
-                  :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
-                  badgeClass="p-badge-warning" @click="onClickTaskLog(task.taskid, idx)"/>
-                </div>
-              </template>
-              <template v-slot:right>
-                <Button class="p-button-text" icon="las la-terminal"
-                 @click="onClickTaskLog(task.taskid)"/>
-                <Button class="p-button-text p-ml-2" icon="las la-user-secret"
-                 @click="onClickLog('task', task.taskid)"/>
-              </template>
-            </Toolbar>
-          </Fieldset>
-        </div>
+            <TabPanel header="IaaS">
+              <DataTable :value="cluster_iaas_nodes" :scrollable="true" style="width: 100%">
+                <Column field="provider" header="Provider"></Column>
+                <Column field="id" header="ID"></Column>
+                <Column field="label" header="Label"></Column>
+                <Column field="inject_ip" header="IP"></Column>
+                <Column field="description" header="Specs"></Column>
+                <Column field="create_time" header="Creation"></Column>
+                <Column field="status" header="Status"></Column>
+              </DataTable>
+            </TabPanel>
+
+            <TabPanel header="Swarm Nodes">
+              <DataTable :value="cluster_swarm_nodes" :scrollable="true" style="width: 100%">
+                <Column field="ID" header="ID"></Column>
+                <Column field="Spec.Role" header="Role"></Column>
+                <Column field="Description.Hostname" header="Hostname"></Column>
+                <Column field="Status.Addr" header="Address"></Column>
+                <Column field="Description.Engine.EngineVersion" header="Docker"></Column>
+                <Column field="inject_cpu" header="Nano"></Column>
+                <Column field="inject_memory" header="Memory"></Column>
+                <Column field="Status.State" header="State"></Column>
+                <Column field="inject_labels" header="Labels"></Column>
+              </DataTable>
+            </TabPanel>
+
+            <TabPanel header="Swarm Services">
+              <DataTable :value="cluster_services" :scrollable="true" style="width: 100%">
+                <Column field="ID" header="ID"></Column>
+                <Column field="Spec.Name" header="Name"></Column>
+                <Column field="inject_ports" header="Ports"></Column>
+                <Column field="inject_constraints" header="Constraints"></Column>
+                <Column field="Spec.Mode.Replicated.Replicas" header="Replicas"></Column>
+                <Column field="inject_createtime" header="Created"></Column>
+                <Column field="inject_updatetime" header="Updated"></Column>
+                <Column field="inject_labels" header="Labels"></Column>
+              </DataTable>
+            </TabPanel>
+
+            <TabPanel header="Swarm Tasks">
+              <DataTable :value="cluster_tasks" :scrollable="true" style="width: 100%">
+                <Column field="NodeID" header="Node"></Column>
+                <Column field="ServiceID" header="Service"></Column>
+                <Column field="inject_createtime" header="Created"></Column>
+                <Column field="inject_updatetime" header="Updated"></Column>
+                <Column field="Status.State" header="State"></Column>
+                <Column field="Status.Err" header="Error"></Column>
+              </DataTable>
+            </TabPanel>
+
+          </TabView>
+        </Fieldset>
+
+        <Fieldset legend="Tasks" class="mainfield">
+          <Toolbar>
+            <template v-slot:right>
+              <Button class="p-button-raised p-mr-4" label="Master Logs"
+               icon="las la-terminal" @click="showConsole('log/MASTER')"/>
+
+              <Dropdown v-model="taskFilter" :options="taskFilterOptions"
+                        optionLabel="optionName" placeholder="Filter tasks"/>
+            </template>
+          </Toolbar>
+
+          <Toolbar v-for="task in tasks" :key="task.taskid">
+            <template v-slot:left>
+              <div style="width: 100%; overflow-x: auto;">
+                <p>#{{task.taskid}}</p>
+                <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
+                :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
+                badgeClass="p-badge-warning" @click="onClickTaskLog(task.taskid, idx)"/>
+              </div>
+            </template>
+            <template v-slot:right>
+              <Button class="p-button-text" icon="las la-terminal"
+               @click="onClickTaskLog(task.taskid)"/>
+              <Button class="p-button-text p-ml-2" icon="las la-user-secret"
+               @click="onClickLog('task', task.taskid)"/>
+            </template>
+          </Toolbar>
+        </Fieldset>
 
       </div>
     </div>
@@ -93,14 +156,16 @@
       <h4 class="p-ml-4">{{console_title}}</h4>
 
       <div class="p-d-flex p-ai-center">
-        <span class="p-mr-1">
+        <span class="p-mr-2">
+          <i class="pi pi-refresh"></i>
           Auto refresh
         </span>
         <Checkbox v-model="console_refresh" :binary="true"/>
       </div>
 
       <div class="p-d-flex p-ai-center">
-        <span class="p-mr-1">
+        <span class="p-mr-2">
+          <i class="pi pi-sort-down"></i>
           Stick to bottom
         </span>
         <Checkbox v-model="console_stickbt" :binary="true"/>
@@ -121,6 +186,9 @@
 <script>
 const calabash_url = 'http://localhost:8964'
 const axios = require('axios')
+const dayjs = require('dayjs')
+const relativeTime = require('dayjs/plugin/relativeTime')
+dayjs.extend(relativeTime)
 
 module.exports = {
   mounted: function() {
@@ -148,6 +216,76 @@ module.exports = {
 
     taskFilter: function(filter) {
       this.updateTaskList()
+    },
+
+    tasks: function(newTasks) {
+      vm = this
+      newTasks.forEach((task) => {
+        const runList = task.runList
+        if (task.taskid == 1) {
+          const log = runList[1].log
+          vm.cluster_iaas_nodes = vm.parseJSON(log, vm.cluster_iaas_nodes)
+          vm.cluster_iaas_nodes = vm.cluster_iaas_nodes.map((item) => {
+            item.inject_ip = item.ip.join(', ')
+            return item
+          })
+
+        } else if (task.taskid == 2) {
+          const log = runList[0].log
+          vm.cluster_swarm_nodes = vm.parseJSON(log, vm.cluster_swarm_nodes)
+          vm.cluster_swarm_nodes = vm.cluster_swarm_nodes.map((item) => {
+            const MemoryBytes = item['Description']['Resources']['MemoryBytes']
+            const MemoryGB = Math.round(MemoryBytes / (1024 * 1024 * 1024))
+            item.inject_memory = `${MemoryGB} GB`
+
+            /* See https://github.com/moby/moby/blob/v1.12.0-rc4
+               /daemon/cluster/executor/container/container.go#L328-L332 */
+            const CPUPeriod = 100
+            const NanoCPUs = item['Description']['Resources']['NanoCPUs']
+            item.inject_cpu = NanoCPUs * CPUPeriod / parseFloat('1e9')
+
+            const Labels = item['Spec']['Labels']
+            item.inject_labels = JSON.stringify(Labels)
+
+            return item
+          })
+
+        } else if (task.taskid == 3) {
+          const log = runList[0].log
+          vm.cluster_services = vm.parseJSON(log, vm.cluster_services)
+          vm.cluster_services = vm.cluster_services.map((item) => {
+            const Labels = item['Spec']['Labels']
+            item.inject_labels = JSON.stringify(Labels)
+
+            const createtime = item['CreatedAt']
+            item.inject_createtime = dayjs(createtime).fromNow()
+
+            const updatetime = item['UpdatedAt']
+            item.inject_updatetime = dayjs(updatetime).fromNow()
+
+            const Constraints = item['Spec']['TaskTemplate']['Placement']['Constraints']
+            item.inject_constraints = JSON.stringify(Constraints)
+
+            const Ports = item['Endpoint']['Ports']
+            item.inject_ports = JSON.stringify(Ports)
+
+            return item
+          })
+
+        } else if (task.taskid == 4) {
+          const log = runList[0].log
+          vm.cluster_tasks = vm.parseJSON(log, vm.cluster_tasks)
+          vm.cluster_tasks = vm.cluster_tasks.map((item) => {
+            const createtime = item['CreatedAt']
+            item.inject_createtime = dayjs(createtime).fromNow()
+
+            const updatetime = item['UpdatedAt']
+            item.inject_updatetime = dayjs(updatetime).fromNow()
+
+            return item
+          })
+        }
+      })
     }
   },
 
@@ -158,8 +296,7 @@ module.exports = {
       taskFilter: {name: 'active'},
       taskFilterOptions: [
         {name: 'all', optionName: 'No filter'},
-        {name: 'active', optionName: 'Only active tasks'},
-        {name: 'unactive', optionName: 'Inactive tasks'}
+        {name: 'active', optionName: 'Only active tasks'}
       ],
       nightTheme: false,
       input_job: '',
@@ -195,6 +332,43 @@ module.exports = {
           }
         }
       ],
+      clusterTree:  [
+        {
+            "key": "1",
+            "label": "Events",
+            "data": "Events Folder",
+            "icon": "pi pi-fw pi-calendar",
+            "children": [
+                { "key": "1-0", "label": "Meeting", "icon": "pi pi-fw pi-calendar-plus", "data": "Meeting" },
+                { "key": "1-1", "label": "Product Launch", "icon": "pi pi-fw pi-calendar-plus", "data": "Product Launch" },
+                { "key": "1-2", "label": "Report Review", "icon": "pi pi-fw pi-calendar-plus", "data": "Report Review" }]
+        },
+        {
+            "key": "2",
+            "label": "Movies",
+            "data": "Movies Folder",
+            "icon": "pi pi-fw pi-star",
+            "children": [{
+                "key": "2-0",
+                "icon": "pi pi-fw pi-star",
+                "label": "Al Pacino",
+                "data": "Pacino Movies",
+                "children": [{ "key": "2-0-0", "label": "Scarface", "icon": "pi pi-fw pi-video", "data": "Scarface Movie" }, { "key": "2-0-1", "label": "Serpico", "icon": "pi pi-fw pi-video", "data": "Serpico Movie" }]
+            },
+            {
+                "key": "2-1",
+                "label": "Robert De Niro",
+                "icon": "pi pi-fw pi-star",
+                "data": "De Niro Movies",
+                "children": [{ "key": "2-1-0", "label": "Goodfellas", "icon": "pi pi-fw pi-video", "data": "Goodfellas Movie" }, { "key": "2-1-1", "label": "Untouchables", "icon": "pi pi-fw pi-video", "data": "Untouchables Movie" }]
+            }]
+        }
+    ],
+      cluster_iaas_nodes: [],
+      cluster_swarm_nodes: [],
+      cluster_services: [],
+      cluster_tasks: [],
+
       console_show: false,
       console_full: false,
       console_refresh: true,
@@ -206,6 +380,19 @@ module.exports = {
   },
 
   methods: {
+    parseJSON(json, oldObj) {
+      if (json.trim() === '')
+        return oldObj
+
+      try {
+        const obj = JSON.parse(json)
+        return obj
+      } catch (err) {
+        vm.displayMessage('error', err.toString(), JSON)
+        return oldObj
+      }
+    },
+
     chipIcon(taskJob) {
       /* Example:
         jobname: "ucloud:source"
@@ -466,7 +653,7 @@ module.exports = {
       const [type, _] = fetch_uri.split('/')
       vm.console_show = true
       vm.console_full = false
-      vm.console_title = fetch_uri
+      vm.console_title = fetch_uri + (idx === undefined ? '' : `/job[${idx}]`)
       vm.console_content = ''
 
       const fetcher = function() {
@@ -486,10 +673,10 @@ module.exports = {
             vm.console_content = data.log
           } else if (type === 'task') {
             const runList = res.data['task']['runList']
-            if (idx) {
-              vm.console_content = runList[idx]['log']
-            } else {
+            if (idx === undefined) {
               vm.console_content = vm.collectTaskJobLogs(runList)
+            } else {
+              vm.console_content = runList[idx]['log']
             }
           }
         })
@@ -501,6 +688,9 @@ module.exports = {
       if (vm.console_fetcher) clearInterval(vm.console_fetcher)
       vm.console_fetcher = setInterval(fetcher, 1000)
       setTimeout(fetcher, 0)
+    },
+
+    test() {
     }
   }
 }
@@ -521,7 +711,7 @@ div.main {
   width: 100%;
 }
 
-div.tasks {
+.mainfield {
   margin: 15px;
   width: 100%;
 }
@@ -543,5 +733,9 @@ div.console_head {
 
 div.p-sidebar-content {
   height: calc(100% - 3rem);
+}
+
+td {
+  overflow-wrap: break-word;
 }
 </style>
