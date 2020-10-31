@@ -105,12 +105,13 @@
 
             <TabPanel header="Swarm Tasks">
               <DataTable :value="cluster_tasks" :scrollable="true" style="width: 100%">
-                <Column field="NodeID" header="Node"></Column>
+                <Column field="NodeID" header="Node" sortable="true"></Column>
                 <Column field="ServiceID" header="Service"></Column>
                 <Column field="inject_createtime" header="Created"></Column>
                 <Column field="inject_updatetime" header="Updated"></Column>
-                <Column field="Status.State" header="State"></Column>
+                <Column field="Status.State" header="State" sortable="true"></Column>
                 <Column field="Status.Err" header="Error"></Column>
+                <Column field="inject_timestamp" header="Timestamp" sortable="true"></Column>
               </DataTable>
             </TabPanel>
 
@@ -281,6 +282,9 @@ module.exports = {
 
             const updatetime = item['UpdatedAt']
             item.inject_updatetime = dayjs(updatetime).fromNow()
+
+            const timestamp = item['CreatedAt']
+            item.inject_timestamp = dayjs(timestamp).format('YYYY/MM/DD HH:mm')
 
             return item
           })
