@@ -51,8 +51,7 @@
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
-
-        <Fieldset legend="Cluster" class="mainfield">
+        <Fieldset legend="Quick View" class="mainfield">
           <Toolbar>
             <template v-slot:right>
               <Button label="Test" @click="test()"/>
@@ -60,6 +59,62 @@
           </Toolbar>
 
           <Tree :value="clusterTree"></Tree>
+        </Fieldset>
+
+        <Fieldset legend="Server List" class="mainfield">
+          <TabView>
+
+            <TabPanel header="IaaS">
+              <DataTable :value="cluster_iaas_nodes" :scrollable="true" style="width: 100%">
+                <Column field="provider" header="Provider"></Column>
+                <Column field="id" header="ID"></Column>
+                <Column field="label" header="Label"></Column>
+                <Column field="inject_ip" header="IP"></Column>
+                <Column field="description" header="Specs"></Column>
+                <Column field="create_time" header="Creation"></Column>
+                <Column field="status" header="Status"></Column>
+              </DataTable>
+            </TabPanel>
+
+            <TabPanel header="Swarm Nodes">
+              <DataTable :value="cluster_swarm_nodes" :scrollable="true" style="width: 100%">
+                <Column field="ID" header="ID"></Column>
+                <Column field="Spec.Role" header="Role"></Column>
+                <Column field="Description.Hostname" header="Hostname"></Column>
+                <Column field="Status.Addr" header="Address"></Column>
+                <Column field="Description.Engine.EngineVersion" header="Docker"></Column>
+                <Column field="inject_cpu" header="Nano"></Column>
+                <Column field="inject_memory" header="Memory"></Column>
+                <Column field="Status.State" header="State"></Column>
+                <Column field="inject_labels" header="Labels"></Column>
+              </DataTable>
+            </TabPanel>
+
+            <TabPanel header="Swarm Services">
+              <DataTable :value="cluster_services" :scrollable="true" style="width: 100%">
+                <Column field="ID" header="ID"></Column>
+                <Column field="Spec.Name" header="Name"></Column>
+                <Column field="inject_ports" header="Ports"></Column>
+                <Column field="inject_constraints" header="Constraints"></Column>
+                <Column field="Spec.Mode.Replicated.Replicas" header="Replicas"></Column>
+                <Column field="inject_createtime" header="Created"></Column>
+                <Column field="inject_updatetime" header="Updated"></Column>
+                <Column field="inject_labels" header="Labels"></Column>
+              </DataTable>
+            </TabPanel>
+
+            <TabPanel header="Swarm Tasks">
+              <DataTable :value="cluster_tasks" :scrollable="true" style="width: 100%">
+                <Column field="NodeID" header="Node"></Column>
+                <Column field="ServiceID" header="Service"></Column>
+                <Column field="inject_createtime" header="Created"></Column>
+                <Column field="inject_updatetime" header="Updated"></Column>
+                <Column field="Status.State" header="State"></Column>
+                <Column field="Status.Err" header="Error"></Column>
+              </DataTable>
+            </TabPanel>
+
+          </TabView>
         </Fieldset>
 
         <Fieldset legend="Tasks" class="mainfield">
@@ -131,6 +186,9 @@
 <script>
 const calabash_url = 'http://localhost:8964'
 const axios = require('axios')
+const dayjs = require('dayjs')
+const relativeTime = require('dayjs/plugin/relativeTime')
+dayjs.extend(relativeTime)
 
 module.exports = {
   mounted: function() {
@@ -167,14 +225,65 @@ module.exports = {
         if (task.taskid == 1) {
           const log = runList[1].log
           vm.cluster_iaas_nodes = vm.parseJSON(log, vm.cluster_iaas_nodes)
+          vm.cluster_iaas_nodes = vm.cluster_iaas_nodes.map((item) => {
+            item.inject_ip = item.ip.join(', ')
+            return item
+          })
 
         } else if (task.taskid == 2) {
           const log = runList[0].log
           vm.cluster_swarm_nodes = vm.parseJSON(log, vm.cluster_swarm_nodes)
+          vm.cluster_swarm_nodes = vm.cluster_swarm_nodes.map((item) => {
+            const MemoryBytes = item['Description']['Resources']['MemoryBytes']
+            const MemoryGB = Math.round(MemoryBytes / (1024 * 1024 * 1024))
+            item.inject_memory = `${MemoryGB} GB`
+
+            /* See https://github.com/moby/moby/blob/v1.12.0-rc4
+               /daemon/cluster/executor/container/container.go#L328-L332 */
+            const CPUPeriod = 100
+            const NanoCPUs = item['Description']['Resources']['NanoCPUs']
+            item.inject_cpu = NanoCPUs * CPUPeriod / parseFloat('1e9')
+
+            const Labels = item['Spec']['Labels']
+            item.inject_labels = JSON.stringify(Labels)
+
+            return item
+          })
 
         } else if (task.taskid == 3) {
           const log = runList[0].log
           vm.cluster_services = vm.parseJSON(log, vm.cluster_services)
+          vm.cluster_services = vm.cluster_services.map((item) => {
+            const Labels = item['Spec']['Labels']
+            item.inject_labels = JSON.stringify(Labels)
+
+            const createtime = item['CreatedAt']
+            item.inject_createtime = dayjs(createtime).fromNow()
+
+            const updatetime = item['UpdatedAt']
+            item.inject_updatetime = dayjs(updatetime).fromNow()
+
+            const Constraints = item['Spec']['TaskTemplate']['Placement']['Constraints']
+            item.inject_constraints = JSON.stringify(Constraints)
+
+            const Ports = item['Endpoint']['Ports']
+            item.inject_ports = JSON.stringify(Ports)
+
+            return item
+          })
+
+        } else if (task.taskid == 4) {
+          const log = runList[0].log
+          vm.cluster_tasks = vm.parseJSON(log, vm.cluster_tasks)
+          vm.cluster_tasks = vm.cluster_tasks.map((item) => {
+            const createtime = item['CreatedAt']
+            item.inject_createtime = dayjs(createtime).fromNow()
+
+            const updatetime = item['UpdatedAt']
+            item.inject_updatetime = dayjs(updatetime).fromNow()
+
+            return item
+          })
         }
       })
     }
@@ -255,10 +364,10 @@ module.exports = {
             }]
         }
     ],
-
       cluster_iaas_nodes: [],
       cluster_swarm_nodes: [],
       cluster_services: [],
+      cluster_tasks: [],
 
       console_show: false,
       console_full: false,
@@ -582,9 +691,6 @@ module.exports = {
     },
 
     test() {
-      console.log(this.cluster_iaas_nodes[0])
-      console.log(this.cluster_swarm_nodes)
-      console.log(this.cluster_services)
     }
   }
 }
@@ -627,5 +733,9 @@ div.console_head {
 
 div.p-sidebar-content {
   height: calc(100% - 3rem);
+}
+
+td {
+  overflow-wrap: break-word;
 }
 </style>
