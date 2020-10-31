@@ -5,7 +5,7 @@
   "author": "Wei Zhong",
   "license": "MIT",
   "scripts": {
-    "watch": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline",
+    "watch": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --mode development --inline",
     "build": "./node_modules/webpack/bin/webpack.js --mode production --module-bind js=babel-loader --display-error-details",
     "serve": "./node_modules/http-server/bin/http-server ./dist --port 19985"
   },

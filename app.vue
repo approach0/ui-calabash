@@ -185,7 +185,7 @@
 </template>
 
 <script>
-const calabash_url = 'http://localhost:8964'
+const calabash_url = CALABASH_URL
 const axios = require('axios')
 const dayjs = require('dayjs')
 const relativeTime = require('dayjs/plugin/relativeTime')

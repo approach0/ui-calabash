@@ -16,6 +16,7 @@ const PORT = 19985
 module.exports = (env, options) => {
   const mode = options.mode;
   console.log(`[ this is ${mode} mode, listen port = ${PORT} ]`);
+
   return {
     /* default is development mode, run 'yarn run build' for production. */
     mode: mode,
@@ -112,6 +113,9 @@ module.exports = (env, options) => {
       new VueLoaderPlugin(),
       new MiniCssExtractPlugin({
         filename: '[name].css'
+      }),
+      new webpack.DefinePlugin({
+        CALABASH_URL: JSON.stringify(mode === 'production' ? process.env.CALABASH_URL : 'http://localhost:8964')
       })
     ],
     devServer: {
