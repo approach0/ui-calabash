@@ -636,7 +636,7 @@ module.exports = {
     },
 
     onClickLog(type, id) {
-      if (id.trim() === '') {
+      if (typeof id === 'string' && id.trim() === '') {
         this.displayMessage('warn', 'Please enter a log ID')
         return
       }
