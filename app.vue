@@ -54,8 +54,9 @@
         <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
             <template v-slot:left>
-              <Button label="Query Selected" @click="clusterTreeQuerySelected()"/>
-              <div style="display:none">Selected: {{clusterTreeSel}}</div>
+              <Button v-for="item in clusterTreeSelModel" :key="item.label"
+                class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
+                @click="input_job = item.query" />
             </template>
             <template v-slot:right>
               <i class="las la-moutain"></i>
@@ -321,6 +322,9 @@ module.exports = {
       this.updateClusterTree()
     },
 
+    clusterTreeSel: function() {
+      this.clusterTreeOnSelected()
+    }
   },
 
   data: function() {
@@ -373,6 +377,7 @@ module.exports = {
       clusterTree: [],
       clusterTreeTopLevel: false,
       clusterTreeSel: null,
+      clusterTreeSelModel: [],
 
       cluster_iaas_nodes: [],
       cluster_swarm_nodes: [],
@@ -783,22 +788,46 @@ module.exports = {
       }
     },
 
-    clusterTreeQuerySelected() {
+    clusterTreeOnSelected() {
       const clusterTreeSel = this.clusterTreeSel
+      this.clusterTreeSelModel = []
       if (clusterTreeSel) {
         const keys = Object.keys(clusterTreeSel)
         const [level, arg1, arg2] = keys[0].split(',')
         let query = ''
         if (level === '0') {
-          query = `${arg1}:delete-node?nodeid=${arg2}`
+          this.clusterTreeSelModel = [{
+            label: 'Delete Node',
+            icon: 'las la-trash',
+            query: `${arg1}:delete-node?nodeid=${arg2}`
+          }]
+
         } else if (level === '1') {
-          query = `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
+          this.clusterTreeSelModel = [{
+            label: 'Set Label',
+            icon: 'las la-tag',
+            query: `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
+          }, {
+            label: 'Remove Label',
+            icon: 'las la-cut',
+            query: `swarm:node-label-rm?swarmNode=${arg1}&labelkey=FOO`
+          }]
+
         } else if (level === '2') {
-          query = `swarm:rm-service?service=${arg1}`
+          this.clusterTreeSelModel = [{
+            label: 'Remove Service',
+            icon: 'las la-trash',
+            query: `swarm:rm-service?service=${arg1}`
+          }, {
+            label: 'Service Logs',
+            icon: 'las la-terminal',
+            query: `swarm:service-logs?service=${arg1}`
+          }]
+
         } else {
           console.error('Unexpected clusterTreeSel', clusterTreeSel)
+          return
         }
-        this.input_job = query
       }
     }
   }
