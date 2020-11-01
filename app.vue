@@ -54,15 +54,14 @@
         <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
             <template v-slot:left>
-              <i class="las la-cocktail"></i>
-              <i class="hspacer"></i>
-              <InputSwitch v-model="clusterTreeInitLevel"/>
-              <i class="hspacer"></i>
-              <i class="las la-glass-martini"></i>
+              <Button label="Query Selected" @click="clusterTreeQuerySelected()"/>
+              <div style="display:none">Selected: {{clusterTreeSel}}</div>
             </template>
             <template v-slot:right>
-              <Button label="Test" @click="test()"/>
-{{clusterTreeSel}}
+              <i class="las la-moutain"></i>
+              Top-level View
+              <i class="hspacer"></i>
+              <InputSwitch v-model="clusterTreeTopLevel"/>
             </template>
           </Toolbar>
 
@@ -320,7 +319,7 @@ module.exports = {
 
     cluster_tasks: function() {
       this.updateClusterTree()
-    }
+    },
 
   },
 
@@ -372,7 +371,7 @@ module.exports = {
       ],
 
       clusterTree: [],
-      clusterTreeInitLevel: true,
+      clusterTreeTopLevel: false,
       clusterTreeSel: null,
 
       cluster_iaas_nodes: [],
@@ -708,8 +707,9 @@ module.exports = {
     updateClusterTree(level, key) {
       const vm = this
       if (level === undefined) {
+        const startLevel = vm.clusterTreeTopLevel ? 0 : 1;
         vm.clusterTree = []
-        vm.clusterTree = vm.updateClusterTree(vm.clusterTreeInitLevel && 1 || 0)
+        vm.clusterTree = vm.updateClusterTree(startLevel)
 
       } else if (level == 0) {
         return vm.cluster_iaas_nodes.map(node => {
@@ -717,7 +717,7 @@ module.exports = {
           return {
             icon: 'las la-server',
             label: label,
-            key: node.id,
+            key: [level, node.provider, node.id].join(),
             children: vm.updateClusterTree(level + 1, node.label)
           }
         })
@@ -736,7 +736,7 @@ module.exports = {
             return {
               icon: 'las la-brain',
               label: label,
-              key: node.ID,
+              key: [level, node.ID].join(),
               children: vm.updateClusterTree(level + 1, node.ID)
             }
           })
@@ -776,15 +776,30 @@ module.exports = {
             return {
               icon: 'las la-microchip',
               label: label + ' ' + replicas + ' ' + meta.join(' '),
-              key: node.ID,
+              key: [level, name].join(),
               leaf: true
             }
           })
       }
     },
 
-    test() {
-      console.log(this.clusterTree)
+    clusterTreeQuerySelected() {
+      const clusterTreeSel = this.clusterTreeSel
+      if (clusterTreeSel) {
+        const keys = Object.keys(clusterTreeSel)
+        const [level, arg1, arg2] = keys[0].split(',')
+        let query = ''
+        if (level === '0') {
+          query = `${arg1}:delete-node?nodeid=${arg2}`
+        } else if (level === '1') {
+          query = `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
+        } else if (level === '2') {
+          query = `swarm:rm-service?service=${arg1}`
+        } else {
+          console.error('Unexpected clusterTreeSel', clusterTreeSel)
+        }
+        this.input_job = query
+      }
     }
   }
 }
