@@ -222,9 +222,11 @@ module.exports = {
     tasks: function(newTasks) {
       vm = this
       newTasks.forEach((task) => {
-        const runList = task.runList
+        const runList = JSON.parse(JSON.stringify(task.runList))
+		runList.push({}) /* allocate an extra item to ensure item[0] and [1] are accessible */
+
         if (task.taskid == 1) {
-          const log = runList[1].log
+          const log = runList[1].log || ''
           vm.cluster_iaas_nodes = vm.parseJSON(log, vm.cluster_iaas_nodes)
           vm.cluster_iaas_nodes = vm.cluster_iaas_nodes.map((item) => {
             item.inject_ip = item.ip.join(', ')
@@ -232,7 +234,7 @@ module.exports = {
           })
 
         } else if (task.taskid == 2) {
-          const log = runList[0].log
+          const log = runList[0].log || ''
           vm.cluster_swarm_nodes = vm.parseJSON(log, vm.cluster_swarm_nodes)
           vm.cluster_swarm_nodes = vm.cluster_swarm_nodes.map((item) => {
             const MemoryBytes = item['Description']['Resources']['MemoryBytes']
@@ -252,7 +254,7 @@ module.exports = {
           })
 
         } else if (task.taskid == 3) {
-          const log = runList[0].log
+          const log = runList[0].log || ''
           vm.cluster_services = vm.parseJSON(log, vm.cluster_services)
           vm.cluster_services = vm.cluster_services.map((item) => {
             const Labels = item['Spec']['Labels']
@@ -274,7 +276,7 @@ module.exports = {
           })
 
         } else if (task.taskid == 4) {
-          const log = runList[0].log
+          const log = runList[0].log || ''
           vm.cluster_tasks = vm.parseJSON(log, vm.cluster_tasks)
           vm.cluster_tasks = vm.cluster_tasks.map((item) => {
             const createtime = item['CreatedAt']
