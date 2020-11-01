@@ -151,6 +151,9 @@
     </div>
   </div>
 
+  <!-- placeholder to compensate bottom overlay console -->
+  <div style="height: 500px"></div>
+
   <Sidebar :visible="console_show" class="p-sidebar-lg" :showCloseIcon="false"
            :position="console_full ? 'full' : 'bottom'" :modal="false">
     <div class="p-grid p-fluid p-jc-between console_head">
