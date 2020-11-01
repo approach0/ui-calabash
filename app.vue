@@ -29,7 +29,7 @@
 
   <Toast position="top-right"/>
 
-  <Dialog :header="dialog_title" position="top" v-model:visible="dialog_show">
+  <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show">
     <template v-for="(val, key) in job_description" :key="key">
       <Fieldset :legend="key">
         <p v-if="key === 'exec' && Array.isArray(val)">
@@ -40,6 +40,13 @@
         <p v-else>{{val}}</p>
       </Fieldset>
     </template>
+  </Dialog>
+
+  <Dialog header="Add Node for ?" v-model:visible="center_dialog_show">
+    <div v-for="opt in nodeAddOptions" :key="opt.name">
+      <Button :label="opt.name" class="p-mx-2 p-button-text p-button-raised"
+       @click="input_job = opt.query; center_dialog_show = false"/>
+    </div>
   </Dialog>
 
   <div class="p-d-flex">
@@ -54,8 +61,13 @@
         <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
             <template v-slot:left>
-              <Button label="Query Selected" @click="clusterTreeQuerySelected()"/>
-              <div style="display:none">Selected: {{clusterTreeSel}}</div>
+              <Button class="p-mx-2 p-button-text" label="Add Node" icon="las la-server"
+                @click="this.center_dialog_show = true"/>
+              <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
+                @click="input_job = 'swarm:service-create?service=SERVICE'"/>
+              <Button v-for="item in clusterTreeSelModel" :key="item.label"
+                class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
+                @click="input_job = item.query" />
             </template>
             <template v-slot:right>
               <i class="las la-moutain"></i>
@@ -321,6 +333,39 @@ module.exports = {
       this.updateClusterTree()
     },
 
+    clusterTreeSel: function() {
+      this.clusterTreeOnSelected()
+    },
+
+    center_dialog_show: function(onShow) {
+      if (!onShow) return
+
+      this.nodeAddOptions = [{
+        name: 'No special purpose',
+        query: 'swarm:expand?iaascfg=IAASCFG'
+      }]
+
+      const vm = this
+      axios.get(`${calabash_url}/get/configtree`)
+      .then(res => {
+        const data = res.data
+        const usage = data.node_usage
+        if (usage) {
+          Object.keys(usage).forEach(name => {
+            vm.nodeAddOptions.push({
+              name: name,
+              query: `swarm:expand?node_usage=${name}&iaascfg=IAASCFG`
+            })
+          })
+
+        } else {
+          throw new Error('No node-usage config entry!')
+        }
+      })
+      .catch(err => {
+        vm.displayMessage('error', 'Error', err.toString())
+      })
+    }
   },
 
   data: function() {
@@ -340,13 +385,19 @@ module.exports = {
       selectedHistory: '',
       jobHistory: [],
 
-      dialog_show: false,
-      dialog_title: '',
+      top_dialog_show: false,
+      top_dialog_title: '',
+
+      center_dialog_show: false,
+      nodeAddOptions: [
+        /* {query: 'foo', name: 'bar'} */
+      ],
+
       lastDisplayError: null,
 
       log_btn_model: [
         {
-          label: 'Show job',
+          label: 'Job Logs',
           icon: 'pi pi-file',
           command: () => {
             this.onClickLog('job', this.input_job)
@@ -373,6 +424,7 @@ module.exports = {
       clusterTree: [],
       clusterTreeTopLevel: false,
       clusterTreeSel: null,
+      clusterTreeSelModel: [],
 
       cluster_iaas_nodes: [],
       cluster_swarm_nodes: [],
@@ -398,7 +450,7 @@ module.exports = {
         const obj = JSON.parse(json)
         return obj
       } catch (err) {
-        vm.displayMessage('error', err.toString(), JSON)
+        vm.displayMessage('error', err.toString(), json)
         return oldObj
       }
     },
@@ -560,9 +612,9 @@ module.exports = {
       axios.get(`${calabash_url}/get/job/${jobname}`)
       .then(res => {
         const data = res.data
-        vm.dialog_show = true
+        vm.top_dialog_show = true
         vm.job_description = data.props
-        vm.dialog_title = data.jobname
+        vm.top_dialog_title = data.jobname
       })
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
@@ -574,9 +626,9 @@ module.exports = {
       axios.get(`${calabash_url}/get/config`)
       .then(res => {
         const data = res.data
-        vm.dialog_show = true
+        vm.top_dialog_show = true
         vm.job_description = data
-        vm.dialog_title = 'Configs'
+        vm.top_dialog_title = 'Configs'
       })
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
@@ -783,24 +835,49 @@ module.exports = {
       }
     },
 
-    clusterTreeQuerySelected() {
+    clusterTreeOnSelected() {
       const clusterTreeSel = this.clusterTreeSel
+      this.clusterTreeSelModel = []
       if (clusterTreeSel) {
         const keys = Object.keys(clusterTreeSel)
         const [level, arg1, arg2] = keys[0].split(',')
         let query = ''
         if (level === '0') {
-          query = `${arg1}:delete-node?nodeid=${arg2}`
+          this.clusterTreeSelModel = [{
+            label: 'Delete Node',
+            icon: 'las la-trash',
+            query: `${arg1}:delete-node?nodeid=${arg2}`
+          }]
+
         } else if (level === '1') {
-          query = `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
+          this.clusterTreeSelModel = [{
+            label: 'Set Label',
+            icon: 'las la-tag',
+            query: `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
+          }, {
+            label: 'Remove Label',
+            icon: 'las la-cut',
+            query: `swarm:node-label-rm?swarmNode=${arg1}&labelkey=FOO`
+          }]
+
         } else if (level === '2') {
-          query = `swarm:rm-service?service=${arg1}`
+          this.clusterTreeSelModel = [{
+            label: 'Remove Service',
+            icon: 'las la-trash',
+            query: `swarm:rm-service?service=${arg1}`
+          }, {
+            label: 'Service Logs',
+            icon: 'las la-terminal',
+            query: `swarm:service-logs?service=${arg1}`
+          }]
+
         } else {
           console.error('Unexpected clusterTreeSel', clusterTreeSel)
+          return
         }
-        this.input_job = query
       }
     }
+
   }
 }
 </script>
