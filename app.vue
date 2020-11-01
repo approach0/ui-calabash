@@ -29,7 +29,7 @@
 
   <Toast position="top-right"/>
 
-  <Dialog :header="dialog_title" position="top" v-model:visible="dialog_show">
+  <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show">
     <template v-for="(val, key) in job_description" :key="key">
       <Fieldset :legend="key">
         <p v-if="key === 'exec' && Array.isArray(val)">
@@ -40,6 +40,13 @@
         <p v-else>{{val}}</p>
       </Fieldset>
     </template>
+  </Dialog>
+
+  <Dialog header="Add Node for ?" v-model:visible="center_dialog_show">
+    <div v-for="opt in nodeAddOptions" :key="opt.name">
+      <Button :label="opt.name" class="p-mx-2 p-button-text p-button-raised"
+       @click="input_job = opt.query; center_dialog_show = false"/>
+    </div>
   </Dialog>
 
   <div class="p-d-flex">
@@ -55,7 +62,7 @@
           <Toolbar>
             <template v-slot:left>
               <Button class="p-mx-2 p-button-text" label="Add Node" icon="las la-server"
-                @click="input_job = 'swarm:expand?iaascfg=IAASCFG'"/>
+                @click="this.center_dialog_show = true"/>
               <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
                 @click="input_job = 'swarm:service-create?service=SERVICE'"/>
               <Button v-for="item in clusterTreeSelModel" :key="item.label"
@@ -328,6 +335,36 @@ module.exports = {
 
     clusterTreeSel: function() {
       this.clusterTreeOnSelected()
+    },
+
+    center_dialog_show: function(onShow) {
+      if (!onShow) return
+
+      this.nodeAddOptions = [{
+        name: 'No special purpose',
+        query: 'swarm:expand?iaascfg=IAASCFG'
+      }]
+
+      const vm = this
+      axios.get(`${calabash_url}/get/configtree`)
+      .then(res => {
+        const data = res.data
+        const usage = data.node_usage
+        if (usage) {
+          Object.keys(usage).forEach(name => {
+            vm.nodeAddOptions.push({
+              name: name,
+              query: `swarm:expand?node_usage=${name}&iaascfg=IAASCFG`
+            })
+          })
+
+        } else {
+          throw new Error('No node-usage config entry!')
+        }
+      })
+      .catch(err => {
+        vm.displayMessage('error', 'Error', err.toString())
+      })
     }
   },
 
@@ -348,8 +385,14 @@ module.exports = {
       selectedHistory: '',
       jobHistory: [],
 
-      dialog_show: false,
-      dialog_title: '',
+      top_dialog_show: false,
+      top_dialog_title: '',
+
+      center_dialog_show: false,
+      nodeAddOptions: [
+        /* {query: 'foo', name: 'bar'} */
+      ],
+
       lastDisplayError: null,
 
       log_btn_model: [
@@ -407,7 +450,7 @@ module.exports = {
         const obj = JSON.parse(json)
         return obj
       } catch (err) {
-        vm.displayMessage('error', err.toString(), JSON)
+        vm.displayMessage('error', err.toString(), json)
         return oldObj
       }
     },
@@ -569,9 +612,9 @@ module.exports = {
       axios.get(`${calabash_url}/get/job/${jobname}`)
       .then(res => {
         const data = res.data
-        vm.dialog_show = true
+        vm.top_dialog_show = true
         vm.job_description = data.props
-        vm.dialog_title = data.jobname
+        vm.top_dialog_title = data.jobname
       })
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
@@ -583,9 +626,9 @@ module.exports = {
       axios.get(`${calabash_url}/get/config`)
       .then(res => {
         const data = res.data
-        vm.dialog_show = true
+        vm.top_dialog_show = true
         vm.job_description = data
-        vm.dialog_title = 'Configs'
+        vm.top_dialog_title = 'Configs'
       })
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
@@ -834,6 +877,7 @@ module.exports = {
         }
       }
     }
+
   }
 }
 </script>
