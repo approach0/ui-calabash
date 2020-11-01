@@ -54,6 +54,10 @@
         <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
             <template v-slot:left>
+              <Button class="p-mx-2 p-button-text" label="Add Node" icon="las la-server"
+                @click="input_job = 'swarm:expand?iaascfg=IAASCFG'"/>
+              <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
+                @click="input_job = 'swarm:service-create?service=SERVICE'"/>
               <Button v-for="item in clusterTreeSelModel" :key="item.label"
                 class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
                 @click="input_job = item.query" />
@@ -350,7 +354,7 @@ module.exports = {
 
       log_btn_model: [
         {
-          label: 'Show job',
+          label: 'Job Logs',
           icon: 'pi pi-file',
           command: () => {
             this.onClickLog('job', this.input_job)
