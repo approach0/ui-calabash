@@ -51,14 +51,23 @@
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
-        <Fieldset legend="Quick View" class="mainfield">
+        <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
+            <template v-slot:left>
+              <i class="las la-cocktail"></i>
+              <i class="hspacer"></i>
+              <InputSwitch v-model="clusterTreeInitLevel"/>
+              <i class="hspacer"></i>
+              <i class="las la-glass-martini"></i>
+            </template>
             <template v-slot:right>
               <Button label="Test" @click="test()"/>
+{{clusterTreeSel}}
             </template>
           </Toolbar>
 
-          <Tree :value="clusterTree"></Tree>
+          <Tree :value="clusterTree" selectionMode="single" v-model:selectionKeys="clusterTreeSel">
+          </Tree>
         </Fieldset>
 
         <Fieldset legend="Server List" class="mainfield">
@@ -118,7 +127,7 @@
           </TabView>
         </Fieldset>
 
-        <Fieldset legend="Tasks" class="mainfield">
+        <Fieldset legend="Calabash Tasks" class="mainfield">
           <Toolbar>
             <template v-slot:right>
               <Button class="p-button-raised p-mr-4" label="Master Logs"
@@ -295,6 +304,22 @@ module.exports = {
           })
         }
       })
+    },
+
+    cluster_iaas_nodes: function() {
+      this.updateClusterTree()
+    },
+
+    cluster_swarm_nodes: function() {
+      this.updateClusterTree()
+    },
+
+    cluster_services: function() {
+      this.updateClusterTree()
+    },
+
+    cluster_tasks: function() {
+      this.updateClusterTree()
     }
 
   },
@@ -308,15 +333,18 @@ module.exports = {
         {name: 'all', optionName: 'No filter'},
         {name: 'active', optionName: 'Only active tasks'}
       ],
+
       nightTheme: false,
       input_job: '',
       menu_model: [],
+
       selectedHistory: '',
       jobHistory: [],
+
       dialog_show: false,
-      lastDisplayError: null,
       dialog_title: '',
-      job_job_description: {},
+      lastDisplayError: null,
+
       log_btn_model: [
         {
           label: 'Show job',
@@ -342,38 +370,11 @@ module.exports = {
           }
         }
       ],
-      clusterTree:  [
-        {
-            "key": "1",
-            "label": "Events",
-            "data": "Events Folder",
-            "icon": "pi pi-fw pi-calendar",
-            "children": [
-                { "key": "1-0", "label": "Meeting", "icon": "pi pi-fw pi-calendar-plus", "data": "Meeting" },
-                { "key": "1-1", "label": "Product Launch", "icon": "pi pi-fw pi-calendar-plus", "data": "Product Launch" },
-                { "key": "1-2", "label": "Report Review", "icon": "pi pi-fw pi-calendar-plus", "data": "Report Review" }]
-        },
-        {
-            "key": "2",
-            "label": "Movies",
-            "data": "Movies Folder",
-            "icon": "pi pi-fw pi-star",
-            "children": [{
-                "key": "2-0",
-                "icon": "pi pi-fw pi-star",
-                "label": "Al Pacino",
-                "data": "Pacino Movies",
-                "children": [{ "key": "2-0-0", "label": "Scarface", "icon": "pi pi-fw pi-video", "data": "Scarface Movie" }, { "key": "2-0-1", "label": "Serpico", "icon": "pi pi-fw pi-video", "data": "Serpico Movie" }]
-            },
-            {
-                "key": "2-1",
-                "label": "Robert De Niro",
-                "icon": "pi pi-fw pi-star",
-                "data": "De Niro Movies",
-                "children": [{ "key": "2-1-0", "label": "Goodfellas", "icon": "pi pi-fw pi-video", "data": "Goodfellas Movie" }, { "key": "2-1-1", "label": "Untouchables", "icon": "pi pi-fw pi-video", "data": "Untouchables Movie" }]
-            }]
-        }
-    ],
+
+      clusterTree: [],
+      clusterTreeInitLevel: true,
+      clusterTreeSel: null,
+
       cluster_iaas_nodes: [],
       cluster_swarm_nodes: [],
       cluster_services: [],
@@ -704,7 +705,86 @@ module.exports = {
       setTimeout(fetcher, 0)
     },
 
+    updateClusterTree(level, key) {
+      const vm = this
+      if (level === undefined) {
+        vm.clusterTree = []
+        vm.clusterTree = vm.updateClusterTree(vm.clusterTreeInitLevel && 1 || 0)
+
+      } else if (level == 0) {
+        return vm.cluster_iaas_nodes.map(node => {
+          const label = `${node.label} [${node.id}] ${node.inject_ip}`
+          return {
+            icon: 'las la-server',
+            label: label,
+            key: node.id,
+            children: vm.updateClusterTree(level + 1, node.label)
+          }
+        })
+
+      } else if (level == 1) {
+        return vm.cluster_swarm_nodes
+          .filter(node => {
+            if (key === undefined) {
+              return true
+            } else {
+              return node.Description.Hostname === key
+            }
+          })
+          .map(node => {
+            const label = `${node.Spec.Role} ${node.Status.Addr} ${node.inject_labels}`
+            return {
+              icon: 'las la-brain',
+              label: label,
+              key: node.ID,
+              children: vm.updateClusterTree(level + 1, node.ID)
+            }
+          })
+
+      } else if (level == 2) {
+        return Object.values(vm.cluster_tasks
+          .filter(node => {
+            if (key === undefined) {
+              return true
+            } else {
+              return node.NodeID === key
+            }
+          })
+          .reduce((uniq_set, node) => {
+            const service = node.ServiceID
+            if (service in uniq_set) {
+              uniq_set[service].replicas += 1
+            } else {
+              uniq_set[service] = node
+              uniq_set[service].replicas = 0
+            }
+            return uniq_set
+          }, {}))
+          .map(node => {
+            const servInfo = vm.cluster_services.filter(m => m.ID === node.ServiceID)
+            let name = node.ServiceID
+            let meta = []
+            let total_instances = node.replicas
+            if (servInfo.length > 0) {
+              const info = servInfo[0]
+              name = info.Spec.Name
+              meta = [info.inject_constraints, info.inject_updatetime]
+              total_instances = info.Spec.Mode.Replicated.Replicas
+            }
+            const label = `${name} (${node.Status.State}) ${node.Status.Err || ''}`
+            const replicas = node.replicas > 0 ? `(${node.replicas + 1} / ${total_instances})` : ''
+            return {
+              icon: 'las la-microchip',
+              label: label + ' ' + replicas + ' ' + meta.join(' '),
+              key: node.ID,
+              leaf: true
+            }
+          })
+      }
+    },
+
     test() {
+      console.log(this.clusterTree)
     }
   }
 }
