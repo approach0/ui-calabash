@@ -223,7 +223,7 @@ module.exports = {
       vm = this
       newTasks.forEach((task) => {
         const runList = JSON.parse(JSON.stringify(task.runList))
-		runList.push({}) /* allocate an extra item to ensure item[0] and [1] are accessible */
+        runList.push({}) /* allocate an extra item to ensure item[0] and [1] are accessible */
 
         if (task.taskid == 1) {
           const log = runList[1].log || ''
@@ -293,6 +293,7 @@ module.exports = {
         }
       })
     }
+
   },
 
   data: function() {
@@ -653,6 +654,11 @@ module.exports = {
       }, '')
     },
 
+    consoleStickToBottom() {
+      const element = document.getElementById("console")
+      if (element) element.scrollTop = element.scrollHeight
+    },
+
     showConsole(fetch_uri, idx) {
       /* fetch_uri: 'log/:logid' or 'task/:taskid' */
       const vm = this
@@ -663,11 +669,6 @@ module.exports = {
       vm.console_content = ''
 
       const fetcher = function() {
-        if (vm.console_stickbt) {
-          const element = document.getElementById("console")
-          if (element) element.scrollTop = element.scrollHeight
-        }
-
         if (!vm.console_refresh) {
           return
         }
@@ -684,6 +685,10 @@ module.exports = {
             } else {
               vm.console_content = runList[idx]['log']
             }
+          }
+
+          if (vm.console_stickbt) {
+            setTimeout(vm.consoleStickToBottom, 0)
           }
         })
         .catch(err => {
