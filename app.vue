@@ -51,14 +51,22 @@
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
-        <Fieldset legend="Quick View" class="mainfield">
+        <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
+            <template v-slot:left>
+              <Button label="Query Selected" @click="clusterTreeQuerySelected()"/>
+              <div style="display:none">Selected: {{clusterTreeSel}}</div>
+            </template>
             <template v-slot:right>
-              <Button label="Test" @click="test()"/>
+              <i class="las la-moutain"></i>
+              Top-level View
+              <i class="hspacer"></i>
+              <InputSwitch v-model="clusterTreeTopLevel"/>
             </template>
           </Toolbar>
 
-          <Tree :value="clusterTree"></Tree>
+          <Tree :value="clusterTree" selectionMode="single" v-model:selectionKeys="clusterTreeSel">
+          </Tree>
         </Fieldset>
 
         <Fieldset legend="Server List" class="mainfield">
@@ -118,7 +126,7 @@
           </TabView>
         </Fieldset>
 
-        <Fieldset legend="Tasks" class="mainfield">
+        <Fieldset legend="Calabash Tasks" class="mainfield">
           <Toolbar>
             <template v-slot:right>
               <Button class="p-button-raised p-mr-4" label="Master Logs"
@@ -150,6 +158,9 @@
       </div>
     </div>
   </div>
+
+  <!-- placeholder to compensate bottom overlay console -->
+  <div style="height: 500px"></div>
 
   <Sidebar :visible="console_show" class="p-sidebar-lg" :showCloseIcon="false"
            :position="console_full ? 'full' : 'bottom'" :modal="false">
@@ -222,9 +233,11 @@ module.exports = {
     tasks: function(newTasks) {
       vm = this
       newTasks.forEach((task) => {
-        const runList = task.runList
+        const runList = JSON.parse(JSON.stringify(task.runList))
+        runList.push({}) /* allocate an extra item to ensure item[0] and [1] are accessible */
+
         if (task.taskid == 1) {
-          const log = runList[1].log
+          const log = runList[1].log || ''
           vm.cluster_iaas_nodes = vm.parseJSON(log, vm.cluster_iaas_nodes)
           vm.cluster_iaas_nodes = vm.cluster_iaas_nodes.map((item) => {
             item.inject_ip = item.ip.join(', ')
@@ -232,7 +245,7 @@ module.exports = {
           })
 
         } else if (task.taskid == 2) {
-          const log = runList[0].log
+          const log = runList[0].log || ''
           vm.cluster_swarm_nodes = vm.parseJSON(log, vm.cluster_swarm_nodes)
           vm.cluster_swarm_nodes = vm.cluster_swarm_nodes.map((item) => {
             const MemoryBytes = item['Description']['Resources']['MemoryBytes']
@@ -252,7 +265,7 @@ module.exports = {
           })
 
         } else if (task.taskid == 3) {
-          const log = runList[0].log
+          const log = runList[0].log || ''
           vm.cluster_services = vm.parseJSON(log, vm.cluster_services)
           vm.cluster_services = vm.cluster_services.map((item) => {
             const Labels = item['Spec']['Labels']
@@ -274,7 +287,7 @@ module.exports = {
           })
 
         } else if (task.taskid == 4) {
-          const log = runList[0].log
+          const log = runList[0].log || ''
           vm.cluster_tasks = vm.parseJSON(log, vm.cluster_tasks)
           vm.cluster_tasks = vm.cluster_tasks.map((item) => {
             const createtime = item['CreatedAt']
@@ -290,7 +303,24 @@ module.exports = {
           })
         }
       })
-    }
+    },
+
+    cluster_iaas_nodes: function() {
+      this.updateClusterTree()
+    },
+
+    cluster_swarm_nodes: function() {
+      this.updateClusterTree()
+    },
+
+    cluster_services: function() {
+      this.updateClusterTree()
+    },
+
+    cluster_tasks: function() {
+      this.updateClusterTree()
+    },
+
   },
 
   data: function() {
@@ -302,15 +332,18 @@ module.exports = {
         {name: 'all', optionName: 'No filter'},
         {name: 'active', optionName: 'Only active tasks'}
       ],
+
       nightTheme: false,
       input_job: '',
       menu_model: [],
+
       selectedHistory: '',
       jobHistory: [],
+
       dialog_show: false,
-      lastDisplayError: null,
       dialog_title: '',
-      job_job_description: {},
+      lastDisplayError: null,
+
       log_btn_model: [
         {
           label: 'Show job',
@@ -336,38 +369,11 @@ module.exports = {
           }
         }
       ],
-      clusterTree:  [
-        {
-            "key": "1",
-            "label": "Events",
-            "data": "Events Folder",
-            "icon": "pi pi-fw pi-calendar",
-            "children": [
-                { "key": "1-0", "label": "Meeting", "icon": "pi pi-fw pi-calendar-plus", "data": "Meeting" },
-                { "key": "1-1", "label": "Product Launch", "icon": "pi pi-fw pi-calendar-plus", "data": "Product Launch" },
-                { "key": "1-2", "label": "Report Review", "icon": "pi pi-fw pi-calendar-plus", "data": "Report Review" }]
-        },
-        {
-            "key": "2",
-            "label": "Movies",
-            "data": "Movies Folder",
-            "icon": "pi pi-fw pi-star",
-            "children": [{
-                "key": "2-0",
-                "icon": "pi pi-fw pi-star",
-                "label": "Al Pacino",
-                "data": "Pacino Movies",
-                "children": [{ "key": "2-0-0", "label": "Scarface", "icon": "pi pi-fw pi-video", "data": "Scarface Movie" }, { "key": "2-0-1", "label": "Serpico", "icon": "pi pi-fw pi-video", "data": "Serpico Movie" }]
-            },
-            {
-                "key": "2-1",
-                "label": "Robert De Niro",
-                "icon": "pi pi-fw pi-star",
-                "data": "De Niro Movies",
-                "children": [{ "key": "2-1-0", "label": "Goodfellas", "icon": "pi pi-fw pi-video", "data": "Goodfellas Movie" }, { "key": "2-1-1", "label": "Untouchables", "icon": "pi pi-fw pi-video", "data": "Untouchables Movie" }]
-            }]
-        }
-    ],
+
+      clusterTree: [],
+      clusterTreeTopLevel: false,
+      clusterTreeSel: null,
+
       cluster_iaas_nodes: [],
       cluster_swarm_nodes: [],
       cluster_services: [],
@@ -651,6 +657,11 @@ module.exports = {
       }, '')
     },
 
+    consoleStickToBottom() {
+      const element = document.getElementById("console")
+      if (element) element.scrollTop = element.scrollHeight
+    },
+
     showConsole(fetch_uri, idx) {
       /* fetch_uri: 'log/:logid' or 'task/:taskid' */
       const vm = this
@@ -661,11 +672,6 @@ module.exports = {
       vm.console_content = ''
 
       const fetcher = function() {
-        if (vm.console_stickbt) {
-          const element = document.getElementById("console")
-          if (element) element.scrollTop = element.scrollHeight
-        }
-
         if (!vm.console_refresh) {
           return
         }
@@ -683,6 +689,10 @@ module.exports = {
               vm.console_content = runList[idx]['log']
             }
           }
+
+          if (vm.console_stickbt) {
+            setTimeout(vm.consoleStickToBottom, 0)
+          }
         })
         .catch(err => {
           vm.displayMessage('error', 'Error', err.toString())
@@ -694,7 +704,102 @@ module.exports = {
       setTimeout(fetcher, 0)
     },
 
-    test() {
+    updateClusterTree(level, key) {
+      const vm = this
+      if (level === undefined) {
+        const startLevel = vm.clusterTreeTopLevel ? 0 : 1;
+        vm.clusterTree = []
+        vm.clusterTree = vm.updateClusterTree(startLevel)
+
+      } else if (level == 0) {
+        return vm.cluster_iaas_nodes.map(node => {
+          const label = `${node.label} [${node.id}] ${node.inject_ip}`
+          return {
+            icon: 'las la-server',
+            label: label,
+            key: [level, node.provider, node.id].join(),
+            children: vm.updateClusterTree(level + 1, node.label)
+          }
+        })
+
+      } else if (level == 1) {
+        return vm.cluster_swarm_nodes
+          .filter(node => {
+            if (key === undefined) {
+              return true
+            } else {
+              return node.Description.Hostname === key
+            }
+          })
+          .map(node => {
+            const label = `${node.Spec.Role} ${node.Status.Addr} ${node.inject_labels}`
+            return {
+              icon: 'las la-brain',
+              label: label,
+              key: [level, node.ID].join(),
+              children: vm.updateClusterTree(level + 1, node.ID)
+            }
+          })
+
+      } else if (level == 2) {
+        return Object.values(vm.cluster_tasks
+          .filter(node => {
+            if (key === undefined) {
+              return true
+            } else {
+              return node.NodeID === key
+            }
+          })
+          .reduce((uniq_set, node) => {
+            const service = node.ServiceID
+            if (service in uniq_set) {
+              uniq_set[service].replicas += 1
+            } else {
+              uniq_set[service] = node
+              uniq_set[service].replicas = 0
+            }
+            return uniq_set
+          }, {}))
+          .map(node => {
+            const servInfo = vm.cluster_services.filter(m => m.ID === node.ServiceID)
+            let name = node.ServiceID
+            let meta = []
+            let total_instances = node.replicas
+            if (servInfo.length > 0) {
+              const info = servInfo[0]
+              name = info.Spec.Name
+              meta = [info.inject_constraints, info.inject_updatetime]
+              total_instances = info.Spec.Mode.Replicated.Replicas
+            }
+            const label = `${name} (${node.Status.State}) ${node.Status.Err || ''}`
+            const replicas = node.replicas > 0 ? `(${node.replicas + 1} / ${total_instances})` : ''
+            return {
+              icon: 'las la-microchip',
+              label: label + ' ' + replicas + ' ' + meta.join(' '),
+              key: [level, name].join(),
+              leaf: true
+            }
+          })
+      }
+    },
+
+    clusterTreeQuerySelected() {
+      const clusterTreeSel = this.clusterTreeSel
+      if (clusterTreeSel) {
+        const keys = Object.keys(clusterTreeSel)
+        const [level, arg1, arg2] = keys[0].split(',')
+        let query = ''
+        if (level === '0') {
+          query = `${arg1}:delete-node?nodeid=${arg2}`
+        } else if (level === '1') {
+          query = `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
+        } else if (level === '2') {
+          query = `swarm:rm-service?service=${arg1}`
+        } else {
+          console.error('Unexpected clusterTreeSel', clusterTreeSel)
+        }
+        this.input_job = query
+      }
     }
   }
 }
