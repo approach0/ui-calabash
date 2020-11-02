@@ -68,4 +68,7 @@ app.component('Column', Column)
 import Tree from 'primevue/tree'
 app.component('Tree', Tree)
 
+import Textarea from 'primevue/textarea'
+app.component('Textarea', Textarea)
+
 app.mount('#app')

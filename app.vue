@@ -30,23 +30,20 @@
   <Toast position="top-right"/>
 
   <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show">
-    <template v-for="(val, key) in job_description" :key="key">
-      <Fieldset :legend="key">
-        <p v-if="key === 'exec' && Array.isArray(val)">
-          <pre v-for="(item, idx) in val" :key="idx">
-            {{item}}
-          </pre>
-        </p>
-        <p v-else>{{val}}</p>
-      </Fieldset>
-    </template>
+    <Textarea v-model="top_dialog_content" rows="30" cols="80" disabled/>
   </Dialog>
 
-  <Dialog header="Add Node for ?" v-model:visible="center_dialog_show">
-    <div v-for="opt in nodeAddOptions" :key="opt.name">
-      <Button :label="opt.name" class="p-mx-2 p-button-text p-button-raised"
-       @click="input_job = opt.query; center_dialog_show = false"/>
+  <Dialog :header="center_dialog_for" v-model:visible="center_dialog_show" style="min-width: 400px">
+    <div v-for="field in center_dialog_model[center_dialog_for]" :key="field.label">
+      <h4> {{field.label}} </h4>
+      <Listbox v-model="field.value" :options="field.options" optionLabel="name"/>
+      <p>{{ field.value && field.value['desc'] }}</p>
     </div>
+
+    <template #footer>
+      <Button label="Query" icon="pi pi-check" @click="onCenterDialogConfirm()"
+              :disabled="!center_dialog_model[center_dialog_for].every(field => field.value)"/>
+	  </template>
   </Dialog>
 
   <div class="p-d-flex">
@@ -62,9 +59,9 @@
           <Toolbar>
             <template v-slot:left>
               <Button class="p-mx-2 p-button-text" label="Add Node" icon="las la-server"
-                @click="this.center_dialog_show = true"/>
+                @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
               <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
-                @click="input_job = 'swarm:service-create?service=SERVICE'"/>
+                @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
               <Button v-for="item in clusterTreeSelModel" :key="item.label"
                 class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
                 @click="input_job = item.query" />
@@ -340,27 +337,50 @@ module.exports = {
     center_dialog_show: function(onShow) {
       if (!onShow) return
 
-      this.nodeAddOptions = [{
-        name: 'No special purpose',
-        query: 'swarm:expand?iaascfg=IAASCFG'
-      }]
-
+      const about = this.center_dialog_for
+      const fields = this.center_dialog_model[about]
       const vm = this
-      axios.get(`${calabash_url}/get/configtree`)
+
+      axios.get(`${calabash_url}/get/config`)
       .then(res => {
         const data = res.data
-        const usage = data.node_usage
-        if (usage) {
-          Object.keys(usage).forEach(name => {
-            vm.nodeAddOptions.push({
-              name: name,
-              query: `swarm:expand?node_usage=${name}&iaascfg=IAASCFG`
-            })
-          })
 
-        } else {
-          throw new Error('No node-usage config entry!')
-        }
+        fields.forEach(field => {
+          field.options = []
+
+          if (field.label === 'Usage') {
+            const obj = data.node_usage
+            field.options = Object.keys(obj).map(name => {
+              return {
+                name: name,
+                desc: JSON.stringify(obj[name])
+              }
+            })
+
+          } else if (field.label === 'IaaS Config') {
+            data.iaas.providers.forEach(provider => {
+              const configs = data.iaas[provider]
+              const keys = Object.keys(configs).filter(name => name.startsWith('config_'))
+              keys.forEach(key => {
+                field.options.push({
+                  name: `${provider}_${key}`,
+                  desc: JSON.stringify(configs[key]),
+                })
+              })
+            })
+
+          } else if (field.label === 'Service') {
+            field.options = Object.keys(data.service).map(name => {
+              return {
+                name: name
+              }
+            })
+          } else {
+            throw new Error('No desired config entry!')
+          }
+
+        })
+
       })
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
@@ -387,11 +407,32 @@ module.exports = {
 
       top_dialog_show: false,
       top_dialog_title: '',
+      top_dialog_content: '',
 
       center_dialog_show: false,
-      nodeAddOptions: [
-        /* {query: 'foo', name: 'bar'} */
-      ],
+      center_dialog_for: '',
+      center_dialog_model: {
+        'Add Node': [
+          {
+            label: 'Usage',
+            value: '',
+            options: []
+          },
+          {
+            label: 'IaaS Config',
+            value: '',
+            options: []
+          }
+        ],
+
+        'Create Service': [
+          {
+            label: 'Service',
+            value: '',
+            options: []
+          }
+        ]
+      },
 
       lastDisplayError: null,
 
@@ -613,7 +654,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
-        vm.job_description = data.props
+        vm.top_dialog_content = JSON.stringify(data.props, null, 2)
         vm.top_dialog_title = data.jobname
       })
       .catch(err => {
@@ -627,7 +668,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
-        vm.job_description = data
+        vm.top_dialog_content = JSON.stringify(data, null, 2).replaceAll('\\n', '\n')
         vm.top_dialog_title = 'Configs'
       })
       .catch(err => {
@@ -876,8 +917,22 @@ module.exports = {
           return
         }
       }
-    }
+    },
 
+    onCenterDialogConfirm() {
+      const about = this.center_dialog_for
+      const fields = this.center_dialog_model[about]
+      if (about === 'Add Node') {
+        const usage = fields[0].value.name
+        const iaasc = fields[1].value.name
+        this.input_job = `swarm:expand?node_usage=${usage}&iaascfg=${iaasc}`
+
+      } else if (about === 'Create Service') {
+        const service = fields[0].value.name
+        this.input_job = `swarm:service-create?service=${service}`
+      }
+      this.center_dialog_show = false
+    }
   }
 }
 </script>
@@ -923,5 +978,9 @@ div.p-sidebar-content {
 
 td {
   overflow-wrap: break-word;
+}
+
+.p-disabled, .p-component:disabled {
+  opacity: 1.0 !important;
 }
 </style>
