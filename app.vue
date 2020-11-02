@@ -58,7 +58,7 @@
         <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
             <template v-slot:left>
-              <Button class="p-mx-2 p-button-text" label="Add Node" icon="las la-server"
+              <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
                 @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
               <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
                 @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
@@ -68,7 +68,7 @@
             </template>
             <template v-slot:right>
               <i class="las la-moutain"></i>
-              Top-level View
+              Top-level view
               <i class="hspacer"></i>
               <InputSwitch v-model="clusterTreeTopLevel"/>
             </template>
@@ -438,7 +438,7 @@ module.exports = {
 
       log_btn_model: [
         {
-          label: 'Job Logs',
+          label: 'Job logs',
           icon: 'pi pi-file',
           command: () => {
             this.onClickLog('job', this.input_job)
@@ -885,29 +885,29 @@ module.exports = {
         let query = ''
         if (level === '0') {
           this.clusterTreeSelModel = [{
-            label: 'Delete Node',
+            label: 'Delete node',
             icon: 'las la-trash',
             query: `${arg1}:delete-node?nodeid=${arg2}`
           }]
 
         } else if (level === '1') {
           this.clusterTreeSelModel = [{
-            label: 'Set Label',
+            label: 'Set label',
             icon: 'las la-tag',
             query: `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
           }, {
-            label: 'Remove Label',
+            label: 'Remove label',
             icon: 'las la-cut',
             query: `swarm:node-label-rm?swarmNode=${arg1}&labelkey=FOO`
           }]
 
         } else if (level === '2') {
           this.clusterTreeSelModel = [{
-            label: 'Remove Service',
+            label: 'Remove service',
             icon: 'las la-trash',
             query: `swarm:rm-service?service=${arg1}`
           }, {
-            label: 'Service Logs',
+            label: 'Service logs',
             icon: 'las la-terminal',
             query: `swarm:service-logs?service=${arg1}`
           }]
