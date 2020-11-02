@@ -249,7 +249,7 @@ module.exports = {
         if (task.taskid == 1) {
           const log = runList[1].log || ''
           vm.cluster_iaas_nodes = vm.parseJSON(log, vm.cluster_iaas_nodes)
-          vm.cluster_iaas_nodes = vm.cluster_iaas_nodes.map((item) => {
+          vm.cluster_iaas_nodes = vm.cluster_iaas_nodes.map(item => {
             item.inject_ip = item.ip.join(', ')
             return item
           })
@@ -257,7 +257,7 @@ module.exports = {
         } else if (task.taskid == 2) {
           const log = runList[0].log || ''
           vm.cluster_swarm_nodes = vm.parseJSON(log, vm.cluster_swarm_nodes)
-          vm.cluster_swarm_nodes = vm.cluster_swarm_nodes.map((item) => {
+          vm.cluster_swarm_nodes = vm.cluster_swarm_nodes.map(item => {
             const MemoryBytes = item['Description']['Resources']['MemoryBytes']
             const MemoryGB = Math.round(MemoryBytes / (1024 * 1024 * 1024))
             item.inject_memory = `${MemoryGB} GB`
@@ -277,7 +277,7 @@ module.exports = {
         } else if (task.taskid == 3) {
           const log = runList[0].log || ''
           vm.cluster_services = vm.parseJSON(log, vm.cluster_services)
-          vm.cluster_services = vm.cluster_services.map((item) => {
+          vm.cluster_services = vm.cluster_services.map(item => {
             const Labels = item['Spec']['Labels']
             item.inject_labels = JSON.stringify(Labels)
 
@@ -299,7 +299,7 @@ module.exports = {
         } else if (task.taskid == 4) {
           const log = runList[0].log || ''
           vm.cluster_tasks = vm.parseJSON(log, vm.cluster_tasks)
-          vm.cluster_tasks = vm.cluster_tasks.map((item) => {
+          vm.cluster_tasks = vm.cluster_tasks.map(item => {
             const createtime = item['CreatedAt']
             item.inject_createtime = dayjs(createtime).fromNow()
 
@@ -816,7 +816,7 @@ module.exports = {
           return {
             icon: 'las la-server',
             label: label,
-            key: [level, node.provider, node.id].join(),
+            key: [level, node.provider, node.id, node.inject_ip].join(),
             children: vm.updateClusterTree(level + 1, node.label)
           }
         })
@@ -887,13 +887,17 @@ module.exports = {
       this.clusterTreeSelModel = []
       if (clusterTreeSel) {
         const keys = Object.keys(clusterTreeSel)
-        const [level, arg1, arg2] = keys[0].split(',')
+        const [level, arg1, arg2, arg3] = keys[0].split(',')
         let query = ''
         if (level === '0') {
           this.clusterTreeSelModel = [{
             label: 'Delete node',
             icon: 'las la-trash',
             query: `${arg1}:delete-node?nodeid=${arg2}`
+          }, {
+            label: 'SSH command',
+            icon: 'las la-terminal',
+            query: `ssh ${arg3}`
           }]
 
         } else if (level === '1') {
