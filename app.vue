@@ -874,7 +874,7 @@ module.exports = {
               meta = [info.inject_constraints, info.inject_updatetime]
               total_instances = info.Spec.Mode.Replicated.Replicas
             }
-            const label = `${name} (${node.Status.State}) ${node.Status.Err || ''}`
+            const label = `${name} ${node.Status.Err || ''}`
             let replicas = `(${node.replicas} / ${total_instances})`
             if (node.replicas === 1 && total_instances === 1) { replicas = '' }
             return {
