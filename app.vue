@@ -8,7 +8,7 @@
     <div class="p-col-12 p-md-8 p-lg-6 p-input-icon-left p-d-flex p-ai-center">
       <i class="pi pi-caret-right p-pl-3"></i>
       <InputText type="text" v-model="input_job" style="flex-grow: 1;"
-       placeholder="Run job" class="p-inputtext-sm p-m-2"/>
+       placeholder="Run job from here ..." class="p-inputtext-sm p-m-2"/>
       <SplitButton label="Run" :model="run_btn_model" @click="runJob()"/>
       <SplitButton label="Info" class="p-ml-2 p-button-secondary" :model="log_btn_model"
        @click="showJob()"/>
@@ -29,8 +29,9 @@
 
   <Toast position="top-right"/>
 
-  <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show">
-    <Textarea v-model="top_dialog_content" rows="30" cols="80" disabled/>
+  <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show"
+          :maximizable="top_dialog_maximizable">
+    <Textarea v-model="top_dialog_content" class="top_dialog" :disabled="true"/>
   </Dialog>
 
   <Dialog :header="center_dialog_for" v-model:visible="center_dialog_show" style="min-width: 400px">
@@ -58,7 +59,7 @@
         <Fieldset legend="Cluster Tree" class="mainfield">
           <Toolbar>
             <template v-slot:left>
-              <Button class="p-mx-2 p-button-text" label="Add Node" icon="las la-server"
+              <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
                 @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
               <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
                 @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
@@ -68,7 +69,7 @@
             </template>
             <template v-slot:right>
               <i class="las la-moutain"></i>
-              Top-level View
+              Top-level view
               <i class="hspacer"></i>
               <InputSwitch v-model="clusterTreeTopLevel"/>
             </template>
@@ -219,7 +220,7 @@ module.exports = {
 
     setInterval(function() {
       vm.updateTaskList()
-    }, 1000)
+    }, 2000)
   },
 
   watch: {
@@ -408,6 +409,7 @@ module.exports = {
       top_dialog_show: false,
       top_dialog_title: '',
       top_dialog_content: '',
+      top_dialog_maximizable: false,
 
       center_dialog_show: false,
       center_dialog_for: '',
@@ -438,7 +440,7 @@ module.exports = {
 
       log_btn_model: [
         {
-          label: 'Job Logs',
+          label: 'Job logs',
           icon: 'pi pi-file',
           command: () => {
             this.onClickLog('job', this.input_job)
@@ -654,6 +656,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
+        vm.top_dialog_maximizable = false
         vm.top_dialog_content = JSON.stringify(data.props, null, 2)
         vm.top_dialog_title = data.jobname
       })
@@ -668,6 +671,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
+        vm.top_dialog_maximizable = true
         vm.top_dialog_content = JSON.stringify(data, null, 2).replaceAll('\\n', '\n')
         vm.top_dialog_title = 'Configs'
       })
@@ -717,6 +721,8 @@ module.exports = {
       axios.post(`${calabash_url}/runjob`, options)
       .then(function (res) {
         const ret = res.data
+
+        if (res.status != 200) { throw new Error('No permission.') }
 
         vm.displayMessage('success', jobname, JSON.stringify(ret))
 
@@ -885,29 +891,29 @@ module.exports = {
         let query = ''
         if (level === '0') {
           this.clusterTreeSelModel = [{
-            label: 'Delete Node',
+            label: 'Delete node',
             icon: 'las la-trash',
             query: `${arg1}:delete-node?nodeid=${arg2}`
           }]
 
         } else if (level === '1') {
           this.clusterTreeSelModel = [{
-            label: 'Set Label',
+            label: 'Set label',
             icon: 'las la-tag',
             query: `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
           }, {
-            label: 'Remove Label',
+            label: 'Remove label',
             icon: 'las la-cut',
             query: `swarm:node-label-rm?swarmNode=${arg1}&labelkey=FOO`
           }]
 
         } else if (level === '2') {
           this.clusterTreeSelModel = [{
-            label: 'Remove Service',
+            label: 'Remove service',
             icon: 'las la-trash',
             query: `swarm:rm-service?service=${arg1}`
           }, {
-            label: 'Service Logs',
+            label: 'Service logs',
             icon: 'las la-terminal',
             query: `swarm:service-logs?service=${arg1}`
           }]
@@ -982,5 +988,12 @@ td {
 
 .p-disabled, .p-component:disabled {
   opacity: 1.0 !important;
+}
+
+.top_dialog {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  min-width: 600px;
 }
 </style>
