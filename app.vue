@@ -851,11 +851,15 @@ module.exports = {
           })
           .reduce((uniq_set, node) => {
             const service = node.ServiceID
+            if (node.Status.State !== 'running') {
+              return uniq_set
+            }
+
             if (service in uniq_set) {
               uniq_set[service].replicas += 1
             } else {
               uniq_set[service] = node
-              uniq_set[service].replicas = 0
+              uniq_set[service].replicas = 1
             }
             return uniq_set
           }, {}))
@@ -871,7 +875,8 @@ module.exports = {
               total_instances = info.Spec.Mode.Replicated.Replicas
             }
             const label = `${name} (${node.Status.State}) ${node.Status.Err || ''}`
-            const replicas = node.replicas > 0 ? `(${node.replicas + 1} / ${total_instances})` : ''
+            let replicas = `(${node.replicas} / ${total_instances})`
+            if (node.replicas === 1 && total_instances === 1) { replicas = '' }
             return {
               icon: 'las la-microchip',
               label: label + ' ' + replicas + ' ' + meta.join(' '),
