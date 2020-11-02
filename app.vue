@@ -34,10 +34,22 @@
   </Dialog>
 
   <Dialog header="Add Node for ?" v-model:visible="center_dialog_show">
-    <div v-for="opt in nodeAddOptions" :key="opt.name">
-      <Button :label="opt.name" class="p-mx-2 p-button-text p-button-raised"
-       @click="input_job = opt.query; center_dialog_show = false"/>
-    </div>
+    <Fieldset legend="Usage">
+      <Dropdown v-model="nodeAdd_usage" :options="nodeAddOpt_usage" optionLabel="name"
+                placeholder="Choose Usage..."/>
+      <p>{{nodeAdd_usage && nodeAdd_usage['desc']}}</p>
+    </Fieldset>
+
+    <Fieldset legend="Usage" class="p-mb-6">
+      <Dropdown v-model="nodeAdd_iaasc" :options="nodeAddOpt_iaasc" optionLabel="name"
+                placeholder="Choose IaaS Config..."/>
+      <p>{{nodeAdd_iaasc && nodeAdd_iaasc['desc']}}</p>
+    </Fieldset>
+
+    <template #footer>
+      <Button label="Query" icon="pi pi-check" @click="onClickNodeAdd()"
+              :disabled="nodeAdd_usage === '' || nodeAdd_iaasc === '' "/>
+	  </template>
   </Dialog>
 
   <div class="p-d-flex">
@@ -331,26 +343,41 @@ module.exports = {
     center_dialog_show: function(onShow) {
       if (!onShow) return
 
-      this.nodeAddOptions = [{
-        name: 'No special purpose',
-        query: 'swarm:expand?iaascfg=IAASCFG'
-      }]
+      this.nodeAddOpt_usage = []
+      this.nodeAddOpt_iaasc = []
 
       const vm = this
       axios.get(`${calabash_url}/get/config`)
       .then(res => {
         const data = res.data
+
         const usage = data.node_usage
         if (usage) {
           Object.keys(usage).forEach(name => {
-            vm.nodeAddOptions.push({
+            vm.nodeAddOpt_usage.push({
               name: name,
-              query: `swarm:expand?node_usage=${name}&iaascfg=IAASCFG`
+              desc: usage[name]
             })
           })
 
         } else {
           throw new Error('No node-usage config entry!')
+        }
+
+        const providers = data.iaas.providers
+        if (providers) {
+          providers.forEach(provider => {
+            const configs = data.iaas[provider]
+            const keys = Object.keys(configs).filter(name => name.startsWith('config_'))
+            keys.forEach(key => {
+              vm.nodeAddOpt_iaasc.push({
+                name: `${provider}_${key}`,
+                desc: configs[key],
+              })
+            })
+          })
+        } else {
+          throw new Error('No iaas-providers config entry!')
         }
       })
       .catch(err => {
@@ -380,6 +407,8 @@ module.exports = {
       top_dialog_title: '',
 
       center_dialog_show: false,
+      nodeAdd_usage: '',
+      nodeAdd_iaasc: '',
       nodeAddOptions: [
         /* {query: 'foo', name: 'bar'} */
       ],
@@ -867,8 +896,14 @@ module.exports = {
           return
         }
       }
-    }
+    },
 
+    onClickNodeAdd() {
+      const usage = this.nodeAdd_usage.name
+      const iaasc = this.nodeAdd_iaasc.name
+      this.input_job = `swarm:expand?node_usage=${usage}&iaascfg=${iaasc}`
+      this.center_dialog_show = false
+    }
   }
 }
 </script>
