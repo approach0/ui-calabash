@@ -29,8 +29,9 @@
 
   <Toast position="top-right"/>
 
-  <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show">
-    <Textarea v-model="top_dialog_content" rows="30" cols="80" disabled/>
+  <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show"
+          :maximizable="top_dialog_maximizable">
+    <Textarea v-model="top_dialog_content" class="top_dialog" :disabled="true"/>
   </Dialog>
 
   <Dialog :header="center_dialog_for" v-model:visible="center_dialog_show" style="min-width: 400px">
@@ -408,6 +409,7 @@ module.exports = {
       top_dialog_show: false,
       top_dialog_title: '',
       top_dialog_content: '',
+      top_dialog_maximizable: false,
 
       center_dialog_show: false,
       center_dialog_for: '',
@@ -654,6 +656,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
+        vm.top_dialog_maximizable = false
         vm.top_dialog_content = JSON.stringify(data.props, null, 2)
         vm.top_dialog_title = data.jobname
       })
@@ -668,6 +671,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
+        vm.top_dialog_maximizable = true
         vm.top_dialog_content = JSON.stringify(data, null, 2).replaceAll('\\n', '\n')
         vm.top_dialog_title = 'Configs'
       })
@@ -982,5 +986,12 @@ td {
 
 .p-disabled, .p-component:disabled {
   opacity: 1.0 !important;
+}
+
+.top_dialog {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  min-width: 600px;
 }
 </style>
