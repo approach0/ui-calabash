@@ -30,16 +30,7 @@
   <Toast position="top-right"/>
 
   <Dialog :header="top_dialog_title" position="top" v-model:visible="top_dialog_show">
-    <template v-for="(val, key) in job_description" :key="key">
-      <Fieldset :legend="key">
-        <p v-if="key === 'exec' && Array.isArray(val)">
-          <pre v-for="(item, idx) in val" :key="idx">
-            {{item}}
-          </pre>
-        </p>
-        <p v-else>{{val}}</p>
-      </Fieldset>
-    </template>
+    <Textarea v-model="top_dialog_content" rows="30" cols="80" disabled/>
   </Dialog>
 
   <Dialog header="Add Node for ?" v-model:visible="center_dialog_show">
@@ -346,7 +337,7 @@ module.exports = {
       }]
 
       const vm = this
-      axios.get(`${calabash_url}/get/configtree`)
+      axios.get(`${calabash_url}/get/config`)
       .then(res => {
         const data = res.data
         const usage = data.node_usage
@@ -613,7 +604,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
-        vm.job_description = data.props
+        vm.top_dialog_content = JSON.stringify(data.props, null, 2)
         vm.top_dialog_title = data.jobname
       })
       .catch(err => {
@@ -627,7 +618,7 @@ module.exports = {
       .then(res => {
         const data = res.data
         vm.top_dialog_show = true
-        vm.job_description = data
+        vm.top_dialog_content = JSON.stringify(data, null, 2).replaceAll('\\n', '\n')
         vm.top_dialog_title = 'Configs'
       })
       .catch(err => {
@@ -923,5 +914,9 @@ div.p-sidebar-content {
 
 td {
   overflow-wrap: break-word;
+}
+
+.p-disabled, .p-component:disabled {
+  opacity: 1.0 !important;
 }
 </style>
