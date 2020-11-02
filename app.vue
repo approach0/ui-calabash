@@ -220,7 +220,7 @@ module.exports = {
 
     setInterval(function() {
       vm.updateTaskList()
-    }, 1000)
+    }, 2000)
   },
 
   watch: {
