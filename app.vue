@@ -720,15 +720,15 @@ module.exports = {
 
       axios.post(`${calabash_url}/runjob`, options)
       .then(function (res) {
-        const ret = res.data
-
         const contentType = res.headers['content-type']
         if (contentType.includes('application/json')) {
+          const ret = res.data
           vm.displayMessage('success', jobname, JSON.stringify(ret))
           vm.updateTaskList(ret['task_id'])
 
         } else {
           throw new Error('No permission. Redirecting in a few seconds...')
+
           const redirectURL = res.request.responseURL
           setTimeout(function() {
             window.location.replace(redirectURL)
