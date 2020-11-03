@@ -722,12 +722,19 @@ module.exports = {
       .then(function (res) {
         const ret = res.data
 
-        if (res.status != 200) { throw new Error('HTTP Error.') }
-        console.log(res)
+        const contentType = res.headers['content-type']
+        if (contentType.includes('application/json')) {
+          vm.displayMessage('success', jobname, JSON.stringify(ret))
+          vm.updateTaskList(ret['task_id'])
 
-        vm.displayMessage('success', jobname, JSON.stringify(ret))
+        } else {
+          throw new Error('No permission. Redirecting in a few seconds...')
+          const redirectURL = res.request.responseURL
+          setTimeout(function() {
+            window.location.replace(redirectURL)
+          }, 3000)
+        }
 
-        vm.updateTaskList(ret['task_id'])
       })
       .catch(function (err) {
         vm.displayMessage('error', 'Error', err.toString())
