@@ -907,6 +907,14 @@ module.exports = {
 
         } else if (level === '1') {
           this.clusterTreeSelModel = [{
+            label: 'Promote',
+            icon: 'las la-angle-double-up',
+            query: `swarm:node-promote?swarmNode=${arg1}`
+          }, {
+            label: 'Demote',
+            icon: 'las la-angle-double-down',
+            query: `swarm:node-demote?swarmNode=${arg1}`
+          }, {
             label: 'Set label',
             icon: 'las la-tag',
             query: `swarm:node-label-set?swarmNode=${arg1}&label=FOO=BAR`
@@ -918,6 +926,10 @@ module.exports = {
 
         } else if (level === '2') {
           this.clusterTreeSelModel = [{
+            label: 'Update service',
+            icon: 'las la-sync',
+            query: `swarm:service-update?service=${arg1}`
+          }, {
             label: 'Remove service',
             icon: 'las la-trash',
             query: `swarm:rm-service?service=${arg1}`
