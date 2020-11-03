@@ -732,6 +732,10 @@ module.exports = {
           const redirectURL = res.request.responseURL
           setTimeout(function() {
             window.location.replace(redirectURL)
+            /* replace() is better than `window.location.href = ...' because
+             * it does not keep the originating page in the session history,
+             * meaning the user won't get stuck in a never-ending back-button fiasco.
+             */
           }, 3000)
         }
 
