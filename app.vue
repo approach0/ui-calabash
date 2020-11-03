@@ -38,7 +38,7 @@
     <div v-for="field in center_dialog_model[center_dialog_for]" :key="field.label">
       <h4> {{field.label}} </h4>
       <Listbox v-model="field.value" :options="field.options" optionLabel="name"/>
-      <p>{{ field.value && field.value['desc'] }}</p>
+      <pre style="overflow-x: auto">{{ field.value && field.value['desc'] }}</pre>
     </div>
 
     <template #footer>
@@ -243,6 +243,7 @@ module.exports = {
     tasks: function(newTasks) {
       vm = this
       newTasks.forEach((task) => {
+        /* copy run list */
         const runList = JSON.parse(JSON.stringify(task.runList))
         runList.push({}) /* allocate an extra item to ensure item[0] and [1] are accessible */
 
@@ -354,7 +355,7 @@ module.exports = {
             field.options = Object.keys(obj).map(name => {
               return {
                 name: name,
-                desc: JSON.stringify(obj[name])
+                desc: vm.prettyJSON(obj[name])
               }
             })
 
@@ -365,17 +366,23 @@ module.exports = {
               keys.forEach(key => {
                 field.options.push({
                   name: `${provider}_${key}`,
-                  desc: JSON.stringify(configs[key]),
+                  desc: vm.prettyJSON(configs[key])
                 })
               })
             })
 
           } else if (field.label === 'Service') {
-            field.options = Object.keys(data.service).map(name => {
-              return {
-                name: name
+            field.options = Object.keys(data.service).reduce((arr, name) => {
+              const service_info = data.service[name]
+              if (!Array.isArray(service_info) && typeof(service_info) !== 'string') {
+                arr.push({
+                  name: name,
+                  desc: vm.prettyJSON(service_info)
+                })
               }
-            })
+
+              return arr
+            }, [])
           } else {
             throw new Error('No desired config entry!')
           }
@@ -496,6 +503,10 @@ module.exports = {
         vm.displayMessage('error', err.toString(), json)
         return oldObj
       }
+    },
+
+    prettyJSON(json) {
+      return JSON.stringify(json, null, 2).replaceAll('\\n', '\n')
     },
 
     chipIcon(taskJob) {
