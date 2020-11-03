@@ -723,7 +723,7 @@ module.exports = {
         const ret = res.data
 
         if (res.status != 200) { throw new Error('HTTP Error.') }
-        console.log(res.request)
+        console.log(res)
 
         vm.displayMessage('success', jobname, JSON.stringify(ret))
 
