@@ -738,7 +738,10 @@ module.exports = {
           vm.updateTaskList(ret['task_id'])
 
         } else {
-          const redirectURL = res.request.responseURL
+          /* rewrite original AJAX target URL to this page */
+          const redirectURI = res.request.responseURL.split('?')[0]
+          const currentURL = window.location.href
+          const redirectURL = redirectURI + '?next=' + encodeURIComponent(currentURL)
           setTimeout(function() {
             window.location.replace(redirectURL)
             /* replace() is better than `window.location.href = ...' because
