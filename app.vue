@@ -727,8 +727,6 @@ module.exports = {
           vm.updateTaskList(ret['task_id'])
 
         } else {
-          throw new Error('No permission. Redirecting in a few seconds...')
-
           const redirectURL = res.request.responseURL
           setTimeout(function() {
             window.location.replace(redirectURL)
@@ -737,6 +735,8 @@ module.exports = {
              * meaning the user won't get stuck in a never-ending back-button fiasco.
              */
           }, 3000)
+
+          throw new Error('No permission. Redirecting in a few seconds...')
         }
 
       })
