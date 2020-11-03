@@ -722,7 +722,8 @@ module.exports = {
       .then(function (res) {
         const ret = res.data
 
-        if (res.status != 200) { throw new Error('No permission.') }
+        if (res.status != 200) { throw new Error('HTTP Error.') }
+        console.log(res.request)
 
         vm.displayMessage('success', jobname, JSON.stringify(ret))
 
