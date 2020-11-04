@@ -7,10 +7,17 @@ Let us orchestrate! :bowtie:
 
 :guitar: :musical_keyboard: :violin: :drum:
 
-### Local test
+### Local hosting
 ```
-# docker build -t ui-calabash .
-# docker run -it -p 19985:19985 ui-calabash
+$ npm install
+$ npm run watch
+```
+
+### Production
+```
+# CALABASH_URL=/calabash
+# npm run build
+# npm run serve
 ```
 
 ### Setup
