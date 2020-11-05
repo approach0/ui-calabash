@@ -779,8 +779,11 @@ module.exports = {
           vm.displayMessage('success', jobname, JSON.stringify(ret))
           vm.updateTaskList()
 
-          const taskID = ret['task_id']
-          taskID && vm.onClickTaskLog(taskID)
+          /* do we open console to follow logs? */
+          if (follow) {
+            const taskID = ret['task_id']
+            taskID && vm.onClickTaskLog(taskID)
+          }
 
         } else {
           /* rewrite original AJAX target URL to this page */
