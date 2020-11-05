@@ -408,7 +408,7 @@ module.exports = {
       taskFetcher: null,
       taskFilter: {name: 'active'},
       taskFilterOptions: [
-        {name: 'all', optionName: 'No filter'},
+        {name: 'all', optionName: 'All recent tasks'},
         {name: 'active', optionName: 'Only active tasks'}
       ],
 
