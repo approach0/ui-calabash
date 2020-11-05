@@ -706,14 +706,17 @@ module.exports = {
       }
     },
 
+    updateRecurFetcher(fetcherName, callbk) {
+      if (this[fetcherName] !== null) {
+        clearTimeout(this[fetcherName])
+      }
+      this[fetcherName] = (callbk || null)
+    },
+
     updateTaskList(refresh) {
       const vm = this
       const taskFilter = this.taskFilter.name
-
-      if (vm.taskFetcher !== null) {
-        clearTimeout(vm.taskFetcher)
-        vm.taskFetcher = null
-      }
+      vm.tasks = []
 
       function fetcher() {
         vm.task_loading = true
@@ -724,15 +727,15 @@ module.exports = {
           vm.tasks = data.all_tasks.reverse()
 
           vm.task_loading = false
-          vm.taskFetcher = setTimeout(fetcher, 2000)
+          vm.updateRecurFetcher('taskFetcher', setTimeout(fetcher, 2000))
         })
         .catch(err => {
           vm.displayMessage('error', 'Error', err.toString())
-          vm.taskFetcher = setTimeout(fetcher, 2000)
+          vm.updateRecurFetcher('taskFetcher', setTimeout(fetcher, 2000))
         })
       }
 
-      setTimeout(fetcher, 0)
+      vm.updateRecurFetcher('taskFetcher', setTimeout(fetcher, 0))
     },
 
     runJob(dryrun, single, pinID) {
@@ -809,27 +812,17 @@ module.exports = {
       if (element) element.scrollTop = element.scrollHeight
     },
 
-    closeConsoleFetcher() {
-      vm.console_content = ''
-      if (vm.console_fetcher !== null) {
-        clearTimeout(vm.console_fetcher)
-        vm.console_fetcher = null
-      }
-    },
-
     showConsole(fetch_uri, idx) {
       /* fetch_uri: 'log/:logid' or 'task/:taskid' */
       const vm = this
       const [type, _] = fetch_uri.split('/')
       vm.console_full = false
       vm.console_title = fetch_uri + (idx === undefined ? '' : `/job[${idx}]`)
-
-      /* close previous pending fetcher */
-      vm.closeConsoleFetcher()
+      vm.console_content = ''
 
       const fetcher = function() {
         if (!vm.console_refresh) {
-          vm.console_fetcher = setTimeout(fetcher, 2000)
+          vm.updateRecurFetcher('console_fetcher', setTimeout(fetcher, 2000))
           return
         }
 
@@ -855,16 +848,16 @@ module.exports = {
 
           /* wait and refresh */
           vm.console_loading = false
-          vm.console_fetcher = setTimeout(fetcher, 2000)
+          vm.updateRecurFetcher('console_fetcher', setTimeout(fetcher, 2000))
         })
         .catch(err => {
           vm.displayMessage('error', 'Error', err.toString())
-          vm.console_fetcher = setTimeout(fetcher, 2000)
+          vm.updateRecurFetcher('console_fetcher', setTimeout(fetcher, 2000))
         })
       };
 
       /* start right away */
-      vm.console_fetcher = setTimeout(fetcher, 0)
+      vm.updateRecurFetcher('console_fetcher', setTimeout(fetcher, 0))
     },
 
     updateClusterTree(level, key) {
