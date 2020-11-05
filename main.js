@@ -71,4 +71,7 @@ app.component('Tree', Tree)
 import Textarea from 'primevue/textarea'
 app.component('Textarea', Textarea)
 
+import ProgressBar from 'primevue/progressbar'
+app.component('ProgressBar', ProgressBar)
+
 app.mount('#app')
