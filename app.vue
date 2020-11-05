@@ -56,7 +56,7 @@
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
-        <Fieldset legend="Cluster Tree" class="mainfield">
+        <Fieldset legend="Cluster Tree" class="p-mt-4">
           <Toolbar>
             <template v-slot:left>
               <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
@@ -79,7 +79,7 @@
           </Tree>
         </Fieldset>
 
-        <Fieldset legend="Server List" class="mainfield">
+        <Fieldset legend="Server List" class="p-mt-4">
           <TabView>
 
             <TabPanel header="IaaS">
@@ -136,7 +136,7 @@
           </TabView>
         </Fieldset>
 
-        <Fieldset legend="Calabash Tasks" class="mainfield">
+        <Fieldset legend="Calabash Tasks" class="p-mt-4">
           <Toolbar>
             <template v-slot:right>
               <Button class="p-button-raised p-mr-4" label="Master Logs"
@@ -165,6 +165,8 @@
           </Toolbar>
         </Fieldset>
 
+        <ProgressBar mode="indeterminate" v-show="task_loading"/>
+
       </div>
     </div>
   </div>
@@ -172,7 +174,7 @@
   <!-- placeholder to compensate bottom overlay console -->
   <div style="height: 500px"></div>
 
-  <Sidebar :visible="console_show" class="p-sidebar-lg" :showCloseIcon="false"
+  <Sidebar :visible="console_fetcher !== null" class="p-sidebar-lg" :showCloseIcon="false"
            :position="console_full ? 'full' : 'bottom'" :modal="false">
     <div class="p-grid p-fluid p-jc-between console_head">
       <h4 class="p-ml-4">{{console_title}}</h4>
@@ -196,11 +198,14 @@
       <div>
         <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
                 @click="console_full=!console_full"/>
-        <Button class="p-button-text" icon="las la-times" @click="console_show=false"/>
+        <Button class="p-button-text" icon="las la-times" @click="closeConsoleFetcher()"/>
       </div>
     </div>
 
-    <pre id="console" class="console p-shadow-4">{{console_content}}</pre>
+    <div style="height: 100%; position: relative" class="p-mt-3">
+      <ProgressBar mode="indeterminate" v-show="console_loading" style="z-index:9"/>
+      <pre id="console" class="console p-shadow-4 abstop">{{console_content}}</pre>
+    </div>
   </Sidebar>
 
 </template>
@@ -218,9 +223,7 @@ module.exports = {
     vm.attachDefaultTheme()
     vm.updateJobList()
 
-    setInterval(function() {
-      vm.updateTaskList()
-    }, 2000)
+    vm.updateTaskList(true)
   },
 
   watch: {
@@ -237,7 +240,7 @@ module.exports = {
     },
 
     taskFilter: function(filter) {
-      this.updateTaskList()
+      this.updateTaskList(false)
     },
 
     tasks: function(newTasks) {
@@ -399,7 +402,10 @@ module.exports = {
   data: function() {
     return {
       logo: require('./resource/logo-128.png'),
+
       tasks: [],
+      task_loading: false,
+      taskFetcher: null,
       taskFilter: {name: 'active'},
       taskFilterOptions: [
         {name: 'all', optionName: 'No filter'},
@@ -481,12 +487,12 @@ module.exports = {
       cluster_services: [],
       cluster_tasks: [],
 
-      console_show: false,
       console_full: false,
       console_refresh: true,
       console_stickbt: true,
       console_title: 'Console',
       console_content: '',
+      console_loading: false,
       console_fetcher: null
     }
   },
@@ -700,17 +706,33 @@ module.exports = {
       }
     },
 
-    updateTaskList() {
+    updateTaskList(refresh) {
       const vm = this
       const taskFilter = this.taskFilter.name
-      axios.get(`${calabash_url}/get/tasks/${taskFilter}`)
-      .then(res => {
-        const data = res.data
-        vm.tasks = data.all_tasks.reverse()
-      })
-      .catch(err => {
-        vm.displayMessage('error', 'Error', err.toString())
-      })
+
+      if (vm.taskFetcher !== null) {
+        clearTimeout(vm.taskFetcher)
+        vm.taskFetcher = null
+      }
+
+      function fetcher() {
+        vm.task_loading = true
+
+        axios.get(`${calabash_url}/get/tasks/${taskFilter}`)
+        .then(res => {
+          const data = res.data
+          vm.tasks = data.all_tasks.reverse()
+
+          vm.task_loading = false
+          vm.taskFetcher = setTimeout(fetcher, 2000)
+        })
+        .catch(err => {
+          vm.displayMessage('error', 'Error', err.toString())
+          vm.taskFetcher = setTimeout(fetcher, 2000)
+        })
+      }
+
+      setTimeout(fetcher, 0)
     },
 
     runJob(dryrun, single, pinID) {
@@ -787,20 +809,31 @@ module.exports = {
       if (element) element.scrollTop = element.scrollHeight
     },
 
+    closeConsoleFetcher() {
+      vm.console_content = ''
+      if (vm.console_fetcher !== null) {
+        clearTimeout(vm.console_fetcher)
+        vm.console_fetcher = null
+      }
+    },
+
     showConsole(fetch_uri, idx) {
       /* fetch_uri: 'log/:logid' or 'task/:taskid' */
       const vm = this
       const [type, _] = fetch_uri.split('/')
-      vm.console_show = true
       vm.console_full = false
       vm.console_title = fetch_uri + (idx === undefined ? '' : `/job[${idx}]`)
-      vm.console_content = ''
+
+      /* close previous pending fetcher */
+      vm.closeConsoleFetcher()
 
       const fetcher = function() {
         if (!vm.console_refresh) {
+          vm.console_fetcher = setTimeout(fetcher, 2000)
           return
         }
 
+        vm.console_loading = true
         axios.get(`${calabash_url}/get/${fetch_uri}`)
         .then(res => {
           if (type === 'log') {
@@ -816,17 +849,22 @@ module.exports = {
           }
 
           if (vm.console_stickbt) {
+            /* stick console scroll bar to the bottom */
             setTimeout(vm.consoleStickToBottom, 0)
           }
+
+          /* wait and refresh */
+          vm.console_loading = false
+          vm.console_fetcher = setTimeout(fetcher, 2000)
         })
         .catch(err => {
           vm.displayMessage('error', 'Error', err.toString())
+          vm.console_fetcher = setTimeout(fetcher, 2000)
         })
       };
 
-      if (vm.console_fetcher) clearInterval(vm.console_fetcher)
-      vm.console_fetcher = setInterval(fetcher, 1000)
-      setTimeout(fetcher, 0)
+      /* start right away */
+      vm.console_fetcher = setTimeout(fetcher, 0)
     },
 
     updateClusterTree(level, key) {
@@ -1003,11 +1041,7 @@ div.topbar {
 div.main {
   position: relative;
   width: 100%;
-}
-
-.mainfield {
-  margin: 15px;
-  width: 100%;
+  margin: 1.5rem;
 }
 
 pre.console {
@@ -1018,6 +1052,7 @@ pre.console {
   padding: 8px;
   color: white;
   height: 100%;
+  margin: 0 !important;
   font-family: InconsolataMono, "Courier New", Courier, monospace;
 }
 
@@ -1042,5 +1077,11 @@ td {
   height: 100%;
   min-height: 400px;
   min-width: 600px;
+}
+
+.abstop {
+  position: absolute;
+  top: 0;
+  width: 100%;
 }
 </style>
