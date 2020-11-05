@@ -198,7 +198,8 @@
       <div>
         <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
                 @click="console_full=!console_full"/>
-        <Button class="p-button-text" icon="las la-times" @click="closeConsoleFetcher()"/>
+        <Button class="p-button-text" icon="las la-times"
+                @click="updateRecurFetcher('console_fetcher')"/>
       </div>
     </div>
 
