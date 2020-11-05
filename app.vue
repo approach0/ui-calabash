@@ -68,8 +68,8 @@
                 @click="input_job = item.query" />
             </template>
             <template v-slot:right>
-              <i class="las la-moutain"></i>
-              Top-level view
+              <i class="las la-tree"></i>
+              Top-level
               <i class="hspacer"></i>
               <InputSwitch v-model="clusterTreeTopLevel"/>
             </template>
@@ -101,7 +101,7 @@
                 <Column field="Description.Hostname" header="Hostname"></Column>
                 <Column field="Status.Addr" header="Address"></Column>
                 <Column field="Description.Engine.EngineVersion" header="Docker"></Column>
-                <Column field="inject_cpu" header="Nano"></Column>
+                <Column field="inject_cpu" header="Nano CPU"></Column>
                 <Column field="inject_memory" header="Memory"></Column>
                 <Column field="Status.State" header="State"></Column>
                 <Column field="inject_labels" header="Labels"></Column>
@@ -128,8 +128,8 @@
                 <Column field="inject_createtime" header="Created"></Column>
                 <Column field="inject_updatetime" header="Updated"></Column>
                 <Column field="Status.State" header="State" sortable="true"></Column>
-                <Column field="Status.Err" header="Error"></Column>
                 <Column field="inject_timestamp" header="Timestamp" sortable="true"></Column>
+                <Column field="Status.Err" header="Error"></Column>
               </DataTable>
             </TabPanel>
 
