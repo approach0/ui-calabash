@@ -237,7 +237,8 @@ module.exports = {
     },
 
     selectedHistory: function(selectedJob) {
-      this.input_job = selectedJob['jobname']
+      if (selectedJob && 'jobname' in selectedJob)
+        this.input_job = selectedJob['jobname']
     },
 
     taskFilter: function(filter) {
@@ -407,7 +408,7 @@ module.exports = {
       tasks: [],
       task_loading: false,
       taskFetcher: null,
-      taskFilter: {name: 'active'},
+      taskFilter: {name: 'all'},
       taskFilterOptions: [
         {name: 'all', optionName: 'All recent tasks'},
         {name: 'active', optionName: 'Only active tasks'}
@@ -691,7 +692,7 @@ module.exports = {
         vm.top_dialog_show = true
         vm.top_dialog_maximizable = true
         vm.top_dialog_content = JSON.stringify(data, null, 2).replaceAll('\\n', '\n')
-        vm.top_dialog_title = 'Configs'
+        vm.top_dialog_title = 'Configurations'
       })
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
