@@ -460,28 +460,36 @@ module.exports = {
 
       lastDisplayError: null,
 
-      log_btn_model: [
-        {
-          label: 'Job logs',
-          icon: 'pi pi-file',
-          command: () => {
-            this.onClickLog('job', this.input_job)
-          }
-        }
-      ],
       run_btn_model: [
+        {
+          label: 'Run and follow logs',
+          icon: 'pi pi-circle-on',
+          command: () => {
+            this.runJob(false, false, true)
+          }
+        },
         {
           label: 'Run as single job',
           icon: 'pi pi-chevron-circle-right',
           command: () => {
-            this.runJob(false, true)
+            this.runJob(false, true, false)
           }
         },
         {
           label: 'Dry run',
           icon: 'pi pi-minus-circle',
           command: () => {
-            this.runJob(true, false)
+            this.runJob(true, false, false)
+          }
+        }
+      ],
+
+      log_btn_model: [
+        {
+          label: 'Job logs',
+          icon: 'pi pi-file',
+          command: () => {
+            this.onClickLog('job', this.input_job)
           }
         }
       ],
@@ -747,7 +755,7 @@ module.exports = {
       vm.updateRecurFetcher('taskFetcher', setTimeout(fetcher, 0))
     },
 
-    runJob(dryrun, single, pinID) {
+    runJob(dryrun, single, follow) {
       const jobname = this.input_job
       const vm = this
       if (jobname.trim() === '') {
@@ -759,8 +767,8 @@ module.exports = {
         goal: jobname,
         dry_run: dryrun || false,
         single_job: single || false,
-        insist_job: pinID && true || false,
-        pin_id_job: pinID
+        insist_job: false,
+        pin_id_job: false
       }
 
       axios.post(`${calabash_url}/runjob`, options)
@@ -769,7 +777,10 @@ module.exports = {
         if (contentType.includes('application/json')) {
           const ret = res.data
           vm.displayMessage('success', jobname, JSON.stringify(ret))
-          vm.updateTaskList(ret['task_id'])
+          vm.updateTaskList()
+
+          const taskID = ret['task_id']
+          taskID && vm.onClickTaskLog(taskID)
 
         } else {
           /* rewrite original AJAX target URL to this page */
