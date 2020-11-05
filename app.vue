@@ -56,31 +56,11 @@
 
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
-        <Fieldset legend="Cluster Tree" class="p-mt-4">
-          <Toolbar>
-            <template v-slot:left>
-              <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
-                @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
-              <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
-                @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
-              <Button v-for="item in clusterTreeSelModel" :key="item.label"
-                class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
-                @click="input_job = item.query" />
-            </template>
-            <template v-slot:right>
-              <i class="las la-tree"></i>
-              Top-level
-              <i class="hspacer"></i>
-              <InputSwitch v-model="clusterTreeTopLevel"/>
-            </template>
-          </Toolbar>
-
-          <Tree :value="clusterTree" selectionMode="single" v-model:selectionKeys="clusterTreeSel">
-          </Tree>
-        </Fieldset>
-
         <Fieldset legend="Server List" class="p-mt-4">
           <TabView>
+
+            <TabPanel header="Blank">
+            </TabPanel>
 
             <TabPanel header="IaaS">
               <DataTable :value="cluster_iaas_nodes" :scrollable="true" style="width: 100%">
@@ -131,6 +111,33 @@
                 <Column field="inject_timestamp" header="Timestamp" sortable="true"></Column>
                 <Column field="Status.Err" header="Error"></Column>
               </DataTable>
+            </TabPanel>
+
+            <TabPanel header="Cluster Tree">
+              <Toolbar>
+                <template v-slot:left>
+                  <div class="p-grid">
+                    <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
+                      @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
+                    <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
+                      @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
+                    <Button v-for="item in clusterTreeSelModel" :key="item.label"
+                      class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
+                      @click="input_job = item.query" />
+                  </div>
+                </template>
+                <template v-slot:right>
+                  <div class="p-m-2">
+                    <i class="las la-tree"></i>
+                    Top-level
+                    <i class="hspacer"></i>
+                    <InputSwitch v-model="clusterTreeTopLevel"/>
+                  </div>
+                </template>
+              </Toolbar>
+
+              <Tree :value="clusterTree" selectionMode="single" v-model:selectionKeys="clusterTreeSel">
+              </Tree>
             </TabPanel>
 
           </TabView>
