@@ -231,7 +231,7 @@ module.exports = {
     vm.attachDefaultTheme()
     vm.updateJobList()
 
-    vm.updateTaskList(true)
+    vm.updateTaskList()
   },
 
   watch: {
@@ -249,7 +249,7 @@ module.exports = {
     },
 
     taskFilter: function(filter) {
-      this.updateTaskList(false)
+      this.updateTaskList()
     },
 
     tasks: function(newTasks) {
@@ -730,7 +730,7 @@ module.exports = {
       this[fetcherName] = (callbk || null)
     },
 
-    updateTaskList(refresh) {
+    updateTaskList() {
       const vm = this
       const taskFilter = this.taskFilter.name
       vm.tasks = []
