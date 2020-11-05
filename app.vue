@@ -68,8 +68,8 @@
                 @click="input_job = item.query" />
             </template>
             <template v-slot:right>
-              <i class="las la-moutain"></i>
-              Top-level view
+              <i class="las la-tree"></i>
+              Top-level
               <i class="hspacer"></i>
               <InputSwitch v-model="clusterTreeTopLevel"/>
             </template>
@@ -101,7 +101,7 @@
                 <Column field="Description.Hostname" header="Hostname"></Column>
                 <Column field="Status.Addr" header="Address"></Column>
                 <Column field="Description.Engine.EngineVersion" header="Docker"></Column>
-                <Column field="inject_cpu" header="Nano"></Column>
+                <Column field="inject_cpu" header="Nano CPU"></Column>
                 <Column field="inject_memory" header="Memory"></Column>
                 <Column field="Status.State" header="State"></Column>
                 <Column field="inject_labels" header="Labels"></Column>
@@ -128,8 +128,8 @@
                 <Column field="inject_createtime" header="Created"></Column>
                 <Column field="inject_updatetime" header="Updated"></Column>
                 <Column field="Status.State" header="State" sortable="true"></Column>
-                <Column field="Status.Err" header="Error"></Column>
                 <Column field="inject_timestamp" header="Timestamp" sortable="true"></Column>
+                <Column field="Status.Err" header="Error"></Column>
               </DataTable>
             </TabPanel>
 
@@ -198,7 +198,8 @@
       <div>
         <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
                 @click="console_full=!console_full"/>
-        <Button class="p-button-text" icon="las la-times" @click="closeConsoleFetcher()"/>
+        <Button class="p-button-text" icon="las la-times"
+                @click="updateRecurFetcher('console_fetcher')"/>
       </div>
     </div>
 
@@ -236,7 +237,8 @@ module.exports = {
     },
 
     selectedHistory: function(selectedJob) {
-      this.input_job = selectedJob['jobname']
+      if (selectedJob && 'jobname' in selectedJob)
+        this.input_job = selectedJob['jobname']
     },
 
     taskFilter: function(filter) {
@@ -406,7 +408,7 @@ module.exports = {
       tasks: [],
       task_loading: false,
       taskFetcher: null,
-      taskFilter: {name: 'active'},
+      taskFilter: {name: 'all'},
       taskFilterOptions: [
         {name: 'all', optionName: 'All recent tasks'},
         {name: 'active', optionName: 'Only active tasks'}
@@ -690,7 +692,7 @@ module.exports = {
         vm.top_dialog_show = true
         vm.top_dialog_maximizable = true
         vm.top_dialog_content = JSON.stringify(data, null, 2).replaceAll('\\n', '\n')
-        vm.top_dialog_title = 'Configs'
+        vm.top_dialog_title = 'Configurations'
       })
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
