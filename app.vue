@@ -154,7 +154,7 @@
           </TabView>
         </Fieldset>
 
-        <Fieldset legend="Calabash Tasks" class="p-mt-4">
+        <Fieldset legend="Calabash Tasks" class="p-mt-4" style="position: relative">
           <Toolbar>
             <template v-slot:right>
               <Button class="p-button-raised p-mr-4" label="Master Logs"
@@ -181,9 +181,20 @@
                @click="onClickLog('task', task.taskid)"/>
             </template>
           </Toolbar>
+
+          <ProgressBar mode="indeterminate" v-show="task_loading" class="bottom_progress"/>
         </Fieldset>
 
-        <ProgressBar mode="indeterminate" v-show="task_loading"/>
+        <Fieldset legend="Docker Builds" class="p-mt-4">
+          <Toolbar v-for="(srv, srvName) in services" :key="srvName">
+            <template v-slot:left>
+            {{srvName}}
+            </template>
+            <template v-slot:right>
+            {{srv.docker_image}}
+            </template>
+          </Toolbar>
+        </Fieldset>
 
       </div>
     </div>
@@ -242,9 +253,13 @@ module.exports = {
   mounted: function() {
     const vm = this
     vm.attachDefaultTheme()
+    vm.updateConfigs()
     vm.updateJobList()
-
     vm.updateTaskList()
+
+    setTimeout(() => {
+      console.log(vm.services)
+    }, 3000)
   },
 
   watch: {
@@ -368,126 +383,124 @@ module.exports = {
       const fields = this.center_dialog_model[about]
       const vm = this
 
-      axios.get(`${calabash_url}/get/config`)
-      .then(res => {
-        const data = res.data
+      fields.forEach(field => {
+        field.options = []
 
-        fields.forEach(field => {
-          field.options = []
+        if (field.label === 'Usage') {
+          const obj = vm.configs.node_usage
+          field.options = Object.keys(obj).map(name => {
+            return {
+              name: name,
+              meta: obj[name],
+              desc: vm.prettyJSON(obj[name])
+            }
+          })
 
-          if (field.label === 'Usage') {
-            const obj = data.node_usage
-            field.options = Object.keys(obj).map(name => {
-              return {
-                name: name,
-                meta: obj[name],
-                desc: vm.prettyJSON(obj[name])
-              }
-            })
-
-          } else if (field.label === 'IaaS Config') {
-            data.iaas.providers.forEach(provider => {
-              const configs = data.iaas[provider]
-              const keys = Object.keys(configs).filter(name => name.startsWith('config_'))
-              keys.forEach(key => {
-                field.options.push({
-                  name: `${provider}_${key}`,
-                  meta: configs[key],
-                  desc: vm.prettyJSON(configs[key])
-                })
+        } else if (field.label === 'IaaS Config') {
+          vm.configs.iaas.providers.forEach(provider => {
+            const cfg = vm.configs.iaas[provider]
+            const keys = Object.keys(cfg).filter(nm => nm.startsWith('config_'))
+            keys.forEach(key => {
+              field.options.push({
+                name: `${provider}_${key}`,
+                meta: cfg[key],
+                desc: vm.prettyJSON(cfg[key])
               })
             })
+          })
 
-          } else if (field.label === 'Service') {
-            field.options = Object.keys(data.service).reduce((arr, name) => {
-              const service_info = data.service[name]
-              if (!Array.isArray(service_info) && typeof(service_info) !== 'string') {
-                arr.push({
-                  name: name,
-                  meta: service_info,
-                  desc: vm.prettyJSON(service_info)
-                })
-              }
+        } else if (field.label === 'Service') {
+          field.options = Object.keys(vm.services).map(key => {
+            const val = vm.services[key]
+            return {
+              name: key,
+              meta: val,
+              desc: vm.prettyJSON(val)
+            }
+          })
 
-              return arr
-            }, [])
+        } else {
+          throw new Error('No desired config entry!')
+        }
 
-          } else {
-            throw new Error('No desired config entry!')
-          }
-
-        })
-
-      })
-      .catch(err => {
-        vm.displayMessage('error', 'Error', err.toString())
       })
     },
 
-    selectedService: function(newValue) {
-      const selected = newValue || {meta:{}}
-      const docker_image = selected.meta['docker_image']
-      const vm = this
-      if (docker_image) {
-        const dockerhub_uri = docker_image.split(/[@:]/)[0]
-        const dockerhub_obj = encodeURIComponent(`/api/repo/v1/repository/${dockerhub_uri}/`)
-        const request_url = `${dockerhub_api}${dockerhub_obj}`
+    //selectedService: function(newValue) {
+    //  const selected = newValue || {meta:{}}
+    //  const docker_image = selected.meta['docker_image']
+    //  const vm = this
+    //  if (docker_image) {
+    //    const dockerhub_uri = docker_image.split(/[@:]/)[0]
+    //    const dockerhub_obj = encodeURIComponent(`/api/repo/v1/repository/${dockerhub_uri}/`)
+    //    const request_url = `${dockerhub_api}${dockerhub_obj}`
 
-        const buildsFetcher = function() {
-          axios.get(request_url)
-          .then(res => {
-            const data = res.data
-            const builds = data.objects.map(obj => {
-              console.log(obj)
-              return {
-                tag: obj.build_tag,
-                commit: obj.commit,
-                state: obj.state,
-                created: obj.created,
-                started: obj.start_date,
-                ended: obj.end_date
-              }
-            })
+    //    const buildsFetcher = function() {
+    //      axios.get(request_url)
+    //      .then(res => {
+    //        const data = res.data
+    //        const builds = data.objects.map(obj => {
+    //          return {
+    //            tag: obj.build_tag,
+    //            commit: obj.commit,
+    //            state: obj.state,
+    //            created: obj.created,
+    //            started: obj.start_date,
+    //            ended: obj.end_date
+    //          }
+    //        })
 
-            vm.docker_repo = dockerhub_uri
-            vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 8000))
-            vm.docker_builds = builds.map(build => {
-              const commit = build.commit.slice(0, 7)
-              const time = dayjs(build.ended).fromNow()
-              const time2color = function(time) {
-                if (time.includes('second')) {
-                  return 'success'
-                } else if (time.includes('minute')) {
-                  return 'info'
-                } else {
-                  return 'warn'
-                }
-              };
-              return {
-                label: `[${build.state}] ${commit} ${build.tag} (${time})`,
-                class: 'p-inline-message p-inline-message-' + time2color(time),
-                command: function() {
-                  const digest_url = dockerhub_digest.replace('<REPLACE>', dockerhub_uri)
-                  console.log('DIGEST can be found here: ' + digest_url)
-                }
-              }
-            })
-          })
-          .catch(err => {
-            vm.displayMessage('error', 'Error', err.toString())
-            vm.updateRecurFetcher('docker_fetcher')
-          })
-        };
+    //        vm.docker_repo = dockerhub_uri
+    //        vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 8000))
+    //        vm.docker_builds = builds.map(build => {
+    //          const commit = build.commit.slice(0, 7)
+    //          const time = dayjs(build.ended).fromNow()
+    //          const time2color = function(time) {
+    //            if (time.includes('second')) {
+    //              return 'success'
+    //            } else if (time.includes('minute')) {
+    //              return 'info'
+    //            } else {
+    //              return 'warn'
+    //            }
+    //          };
+    //          return {
+    //            label: `[${build.state}] ${commit} ${build.tag} (${time})`,
+    //            class: 'p-inline-message p-inline-message-' + time2color(time),
+    //            command: function() {
+    //              const digest_url = dockerhub_digest.replace('<REPLACE>', dockerhub_uri)
+    //              //console.log('DIGEST can be found here: ' + digest_url)
+    //            }
+    //          }
+    //        })
+    //      })
+    //      .catch(err => {
+    //        vm.displayMessage('error', 'Error', err.toString())
+    //        vm.updateRecurFetcher('docker_fetcher')
+    //      })
+    //    };
 
-        vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 0))
-      } else {
-        vm.updateRecurFetcher('docker_fetcher')
-      }
-    }
+    //    vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 0))
+    //  } else {
+    //    vm.updateRecurFetcher('docker_fetcher')
+    //  }
+    //}
 
   },
 
   computed: {
+    services() {
+      const vm = this
+      const raw_services = vm.configs.service || {}
+      return Object.keys(raw_services).reduce((dict, key) => {
+        const val = raw_services[key]
+        if (!Array.isArray(val) && typeof(val) !== 'string') {
+          dict[key] = val
+        }
+        return dict
+      }, {})
+    },
+
     selectedService() {
       return this.center_dialog_model['Create Service'][0].value
     }
@@ -505,6 +518,8 @@ module.exports = {
         {name: 'recent', optionName: 'Recent and active tasks'},
         {name: 'active', optionName: 'Only active tasks'}
       ],
+
+      configs: {},
 
       nightTheme: false,
       input_job: '',
@@ -719,6 +734,18 @@ module.exports = {
       return ''
     },
 
+    updateConfigs() {
+      const vm = this
+      axios.get(`${calabash_url}/get/config`)
+      .then(res => {
+        const data = res.data
+        vm.configs = data
+      })
+      .catch(err => {
+        vm.displayMessage('error', 'Error', err.toString())
+      })
+    },
+
     updateJobList() {
       const vm = this
       axios.get(`${calabash_url}/get/jobs`)
@@ -789,18 +816,11 @@ module.exports = {
     },
 
     showConfigs() {
-      const vm = this
-      axios.get(`${calabash_url}/get/config`)
-      .then(res => {
-        const data = res.data
-        vm.top_dialog_show = true
-        vm.top_dialog_maximizable = true
-        vm.top_dialog_content = JSON.stringify(data, null, 2).replaceAll('\\n', '\n')
-        vm.top_dialog_title = 'Configurations'
-      })
-      .catch(err => {
-        vm.displayMessage('error', 'Error', err.toString())
-      })
+      const cfg = this.configs
+      this.top_dialog_show = true
+      this.top_dialog_maximizable = true
+      this.top_dialog_content = JSON.stringify(cfg, null, 2).replaceAll('\\n', '\n')
+      this.top_dialog_title = 'Configurations'
     },
 
     pushJobHistory(jobname) {
@@ -1193,6 +1213,13 @@ td {
 .abstop {
   position: absolute;
   top: 0;
+  width: 100%;
+}
+
+.bottom_progress {
+  position: absolute !important;
+  bottom: 0;
+  left: 0;
   width: 100%;
 }
 </style>
