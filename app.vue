@@ -53,7 +53,7 @@
     <template #footer>
       <Button label="Query" icon="pi pi-check" @click="onCenterDialogConfirm()"
               :disabled="!center_dialog_model[center_dialog_for].every(field => field.value)"/>
-	  </template>
+    </template>
   </Dialog>
 
   <div class="p-d-flex">
