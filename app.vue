@@ -892,7 +892,7 @@ module.exports = {
 
       } else if (level == 0) {
         return vm.cluster_iaas_nodes.map(node => {
-          const label = `${node.label} [${node.id}] ${node.inject_ip}`
+          const label = `${node.label} [ ${node.provider}#${node.id} ] ${node.inject_ip}`
           return {
             icon: 'las la-server',
             label: label,
