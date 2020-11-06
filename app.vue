@@ -232,6 +232,7 @@
 <script>
 const calabash_url = CALABASH_URL
 const dockerhub_api = 'https://hub.docker.com/api/audit/v1/build/?include_related=true&offset=0&limit=5&object='
+const dockerhub_digest = 'https://hub.docker.com/v2/repositories/<REPLACE>/tags'
 const axios = require('axios')
 const dayjs = require('dayjs')
 const relativeTime = require('dayjs/plugin/relativeTime')
@@ -464,8 +465,11 @@ module.exports = {
               };
               return {
                 label: `[${build.state}] ${commit} ${build.tag} (${time})`,
-                class: 'p-inline-message p-inline-message-' + time2color(time)
-
+                class: 'p-inline-message p-inline-message-' + time2color(time),
+                command: function() {
+                  const digest_url = dockerhub_digest.replace('<REPLACE>', dockerhub_uri)
+                  console.log('DIGEST can be found here: ' + digest_url)
+                }
               }
             })
           })
