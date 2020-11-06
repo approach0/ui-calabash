@@ -34,11 +34,20 @@
     <Textarea v-model="top_dialog_content" class="top_dialog" :disabled="true"/>
   </Dialog>
 
-  <Dialog :header="center_dialog_for" v-model:visible="center_dialog_show" style="min-width: 400px">
+  <Dialog :header="center_dialog_for" v-model:visible="center_dialog_show" style="min-width: 500px"
+          @hide="onCenterDialogClose()">
     <div v-for="field in center_dialog_model[center_dialog_for]" :key="field.label">
       <h4> {{field.label}} </h4>
       <Listbox v-model="field.value" :options="field.options" optionLabel="name"/>
+
+      <h4 v-if="field.value">Description:</h4>
       <pre style="overflow-x: auto">{{ field.value && field.value['desc'] }}</pre>
+
+      <div v-if="docker_fetcher && center_dialog_for === 'Create Service'">
+        <h4>{{docker_repo}} build state:</h4>
+        <Menu :model="docker_builds" style="width:100%"/>
+      </div>
+
     </div>
 
     <template #footer>
@@ -119,8 +128,10 @@
                   <div class="p-grid">
                     <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
                       @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
+
                     <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
                       @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
+
                     <Button v-for="item in clusterTreeSelModel" :key="item.label"
                       class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
                       @click="input_job = item.query" />
@@ -220,6 +231,7 @@
 
 <script>
 const calabash_url = CALABASH_URL
+const dockerhub_api = 'https://hub.docker.com/api/audit/v1/build/?include_related=true&offset=0&limit=5&object='
 const axios = require('axios')
 const dayjs = require('dayjs')
 const relativeTime = require('dayjs/plugin/relativeTime')
@@ -367,6 +379,7 @@ module.exports = {
             field.options = Object.keys(obj).map(name => {
               return {
                 name: name,
+                meta: obj[name],
                 desc: vm.prettyJSON(obj[name])
               }
             })
@@ -378,6 +391,7 @@ module.exports = {
               keys.forEach(key => {
                 field.options.push({
                   name: `${provider}_${key}`,
+                  meta: configs[key],
                   desc: vm.prettyJSON(configs[key])
                 })
               })
@@ -389,12 +403,14 @@ module.exports = {
               if (!Array.isArray(service_info) && typeof(service_info) !== 'string') {
                 arr.push({
                   name: name,
+                  meta: service_info,
                   desc: vm.prettyJSON(service_info)
                 })
               }
 
               return arr
             }, [])
+
           } else {
             throw new Error('No desired config entry!')
           }
@@ -405,6 +421,71 @@ module.exports = {
       .catch(err => {
         vm.displayMessage('error', 'Error', err.toString())
       })
+    },
+
+    selectedService: function(newValue) {
+      const selected = newValue || {meta:{}}
+      const docker_image = selected.meta['docker_image']
+      const vm = this
+      if (docker_image) {
+        const dockerhub_uri = docker_image.split(/[@:]/)[0]
+        const dockerhub_obj = encodeURIComponent(`/api/repo/v1/repository/${dockerhub_uri}/`)
+        const request_url = `${dockerhub_api}${dockerhub_obj}`
+
+        const buildsFetcher = function() {
+          axios.get(request_url)
+          .then(res => {
+            const data = res.data
+            const builds = data.objects.map(obj => {
+              console.log(obj)
+              return {
+                tag: obj.build_tag,
+                commit: obj.commit,
+                state: obj.state,
+                created: obj.created,
+                started: obj.start_date,
+                ended: obj.end_date
+              }
+            })
+
+            vm.docker_repo = dockerhub_uri
+            vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 8000))
+            vm.docker_builds = builds.map(build => {
+              const commit = build.commit.slice(0, 7)
+              const time = dayjs(build.ended).fromNow()
+              const time2color = function(time) {
+                if (time.includes('second')) {
+                  return 'success'
+                } else if (time.includes('minute')) {
+                  return 'info'
+                } else {
+                  return 'warn'
+                }
+              };
+              return {
+                label: `[${build.state}] ${commit} ${build.tag} (${time})`,
+                class: 'p-inline-message p-inline-message-' + time2color(time)
+
+              }
+            })
+          })
+          .catch(err => {
+            vm.displayMessage('error', 'Error', err.toString())
+            vm.updateRecurFetcher('docker_fetcher')
+          })
+        };
+
+        vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 0))
+      } else {
+        vm.updateRecurFetcher('docker_fetcher')
+      }
+    }
+
+  },
+
+  computed: {
+    selectedService() {
+      return this.center_dialog_model['Create Service'][0].value
     }
   },
 
@@ -439,7 +520,7 @@ module.exports = {
         'Add Node': [
           {
             label: 'Usage',
-            value: '',
+            value: '', /* chosen option */
             options: []
           },
           {
@@ -452,11 +533,15 @@ module.exports = {
         'Create Service': [
           {
             label: 'Service',
-            value: '',
+            value: '', /* chosen option */
             options: []
           }
         ]
       },
+
+      docker_repo: '',
+      docker_fetcher: null,
+      docker_builds: [],
 
       lastDisplayError: null,
 
@@ -1026,18 +1111,24 @@ module.exports = {
       }
     },
 
+    onCenterDialogClose() {
+      this.updateRecurFetcher('docker_fetcher')
+    },
+
     onCenterDialogConfirm() {
       const about = this.center_dialog_for
       const fields = this.center_dialog_model[about]
+
       if (about === 'Add Node') {
         const usage = fields[0].value.name
         const iaasc = fields[1].value.name
         this.input_job = `swarm:expand?node_usage=${usage}&iaascfg=${iaasc}`
-
       } else if (about === 'Create Service') {
         const service = fields[0].value.name
+        this.updateRecurFetcher('docker_fetcher')
         this.input_job = `swarm:service-create?service=${service}`
       }
+
       this.center_dialog_show = false
     }
   }
