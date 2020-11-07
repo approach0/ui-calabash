@@ -1134,7 +1134,7 @@ module.exports = {
 
               const workflow_badge = workflow.badge_url
               const workflow_name = workflow.name
-              const state = run.status + (run.conclusion ? ` (${run.conclusion})` : '')
+              const state = run.conclusion ? run.conclusion : run.status
               const state2css = function(state) {
                 if (state.includes('progress'))
                   return 'p-tag p-tag-info'
