@@ -179,7 +179,8 @@
         </Fieldset>
 
         <Fieldset legend="Github Workflows" class="p-mt-4">
-          <div v-for="(wf, key) in gh_workflows" :key="key">
+          <div v-for="(wf, key) in gh_workflows" :key="key" style="position: relative">
+            <ProgressBar mode="indeterminate" v-show="wf.loading" class="bottom_progress"/>
             <Toolbar>
               <template v-slot:left>
                 <h3>{{wf.repo}}</h3>
@@ -272,7 +273,9 @@ module.exports = {
     vm.updateConfigs()
     vm.updateJobList()
     vm.updateTaskList()
-    setInterval(vm.updateWorkflows, 5000)
+
+    setTimeout(vm.updateWorkflows, 0)
+    setInterval(vm.updateWorkflows, 10000)
   },
 
   watch: {
@@ -1109,7 +1112,8 @@ module.exports = {
         const github_pat = vm.configs.github.open_PAT
 
         const fetcher = function(repo) {
-          axios.get(`https://api.github.com/repos/${repo}/actions/runs`, {
+          const randtok = Math.random().toString(36).substr(2)
+          axios.get(`https://api.github.com/repos/${repo}/actions/runs?r=${randtok}`, {
             headers: {
               'Authorization': `token ${github_pat}`
             }
@@ -1160,6 +1164,7 @@ module.exports = {
                 repo: repo,
                 refresh: (old ? old.refresh : false),
                 fetcher: fetcher,
+                loading: false,
                 recent_runs: recent_runs
               };
               vm.gh_workflows[repo] = gh_repo
@@ -1174,6 +1179,7 @@ module.exports = {
 
         const gh_repo = vm.gh_workflows[repo_]
         if (gh_repo === undefined || gh_repo.refresh) {
+          if (gh_repo) gh_repo.loading = true
           fetcher(repo_)
         }
       })
@@ -1244,5 +1250,6 @@ td {
   bottom: 0;
   left: 0;
   width: 100%;
+  z-index: 99;
 }
 </style>
