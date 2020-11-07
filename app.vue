@@ -209,7 +209,8 @@
                 <Column header="State">
                   <template #body="slotProps">
                     <div :class="slotProps.data.css_class">
-                    <a :href="slotProps.data.url" target="_blank" style="color: white">
+                    <a :href="slotProps.data.url" target="_blank"
+                       style="mix-blend-mode: difference;">
                       {{slotProps.data.state}}
                     </a>
                     </div>
