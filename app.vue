@@ -179,37 +179,44 @@
         </Fieldset>
 
         <Fieldset legend="Github Workflows" class="p-mt-4">
+          <Toolbar>
+            <template v-slot:right>
+              <InputText type="text" placeholder="Filter Repository ..." v-model="gh_filter"/>
+            </template>
+          </Toolbar>
           <div v-for="(wf, key) in gh_workflows" :key="key" style="position: relative">
-            <ProgressBar mode="indeterminate" v-show="wf.loading" class="bottom_progress"/>
-            <Toolbar>
-              <template v-slot:left>
-                <h3>{{wf.repo}}</h3>
-              </template>
-              <template v-slot:right>
-                <div class="p-m-2">
-                  <i class="las la-sync"></i>
-                  Refresh
-                  <i class="hspacer"></i>
-                  <InputSwitch v-model="wf.refresh"/>
-                </div>
-              </template>
-            </Toolbar>
-            <DataTable :value="wf.recent_runs" :scrollable="true" style="width: 100%">
-              <Column field="workflow_name" header="Workflow"></Column>
-              <Column field="head_branch" header="Branch"></Column>
-              <Column field="head_sha" header="Commit"></Column>
-              <Column field="created" header="Created"></Column>
-              <Column field="updated" header="Updated"></Column>
-              <Column header="State">
-                <template #body="slotProps">
-                  <div :class="slotProps.data.css_class">
-                  <a :href="slotProps.data.url" target="_blank" style="color: white">
-                    {{slotProps.data.state}}
-                  </a>
+            <div v-show="gh_filter.trim() === '' || key.includes(gh_filter)">
+              <ProgressBar mode="indeterminate" v-show="wf.loading" class="bottom_progress"/>
+              <Toolbar>
+                <template v-slot:left>
+                  <h3>{{wf.repo}}</h3>
+                </template>
+                <template v-slot:right>
+                  <div class="p-m-2">
+                    <i class="las la-sync"></i>
+                    Refresh
+                    <i class="hspacer"></i>
+                    <InputSwitch v-model="wf.refresh"/>
                   </div>
                 </template>
-              </Column>
-            </DataTable>
+              </Toolbar>
+              <DataTable :value="wf.recent_runs" :scrollable="true" style="width: 100%">
+                <Column field="workflow_name" header="Workflow"></Column>
+                <Column field="head_branch" header="Branch"></Column>
+                <Column field="head_sha" header="Commit"></Column>
+                <Column field="created" header="Created"></Column>
+                <Column field="updated" header="Updated"></Column>
+                <Column header="State">
+                  <template #body="slotProps">
+                    <div :class="slotProps.data.css_class">
+                    <a :href="slotProps.data.url" target="_blank" style="color: white">
+                      {{slotProps.data.state}}
+                    </a>
+                    </div>
+                  </template>
+                </Column>
+              </DataTable>
+            </div>
           </div>
         </Fieldset>
 
@@ -465,6 +472,7 @@ module.exports = {
       logo: require('./resource/logo-128.png'),
 
       gh_workflows: {},
+      gh_filter: '',
 
       tasks: [],
       task_loading: false,
