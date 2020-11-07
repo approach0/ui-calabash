@@ -160,8 +160,9 @@
 
           <Toolbar v-for="task in tasks" :key="task.taskid">
             <template v-slot:left>
-              <div style="width: 100%; overflow-x: auto;">
-                <p>#{{task.taskid}}</p>
+              <div style="width: 100%; overflow-x: auto;" class="p-d-flex p-ai-center">
+                <span>#{{task.taskid}}</span>
+                <i class="hspacer"></i>
                 <Button v-for="(job, idx) in task.runList" :key="idx" :label="job.jobname"
                 :icon="chipIcon(job)" :class="chipClass(job)" :badge="chipBadge(job)"
                 badgeClass="p-badge-warning" @click="onClickTaskLog(task.taskid, idx)"/>
@@ -189,7 +190,11 @@
               <ProgressBar mode="indeterminate" v-show="wf.loading" class="bottom_progress"/>
               <Toolbar>
                 <template v-slot:left>
-                  <h3>{{wf.repo}}</h3>
+                  <h3>
+                    <i class="las la-plug"></i>
+                    <i class="hspacer"></i>
+                    <a :href="'https://github.com/' + wf.repo" target="_blank">{{wf.repo}}</a>
+                  </h3>
                 </template>
                 <template v-slot:right>
                   <div class="p-m-2">
@@ -282,8 +287,8 @@ module.exports = {
     vm.updateJobList()
     vm.updateTaskList()
 
-    setTimeout(vm.updateWorkflows, 0)
-    setInterval(vm.updateWorkflows, 10000)
+    setTimeout(vm.updateWorkflows, 1 * 1000)
+    setInterval(vm.updateWorkflows, 10 * 1000)
   },
 
   watch: {
@@ -1115,6 +1120,7 @@ module.exports = {
 
     updateWorkflows() {
       const vm = this
+      if (vm.configs.github === undefined) return
       const workflows = vm.configs.github.workflows || []
 
       workflows.forEach(repo_ => {
