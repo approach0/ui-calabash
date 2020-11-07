@@ -179,8 +179,20 @@
         </Fieldset>
 
         <Fieldset legend="Github Workflows" class="p-mt-4">
-          <div v-for="wf in gh_workflows" :key="wf.repo">
-            <h4>{{wf.repo}}</h4>
+          <div v-for="(wf, key) in gh_workflows" :key="key">
+            <Toolbar>
+              <template v-slot:left>
+                <h3>{{wf.repo}}</h3>
+              </template>
+              <template v-slot:right>
+                <div class="p-m-2">
+                  <i class="las la-sync"></i>
+                  Refresh
+                  <i class="hspacer"></i>
+                  <InputSwitch v-model="wf.refresh"/>
+                </div>
+              </template>
+            </Toolbar>
             <DataTable :value="wf.recent_runs" :scrollable="true" style="width: 100%">
               <Column field="workflow_name" header="Workflow"></Column>
               <Column field="head_branch" header="Branch"></Column>
@@ -260,6 +272,7 @@ module.exports = {
     vm.updateConfigs()
     vm.updateJobList()
     vm.updateTaskList()
+    setInterval(vm.updateWorkflows, 5000)
   },
 
   watch: {
@@ -423,79 +436,6 @@ module.exports = {
         }
 
       })
-    },
-
-    services: function() {
-      const vm = this
-      vm.gh_workflows = []
-      const workflows = vm.configs.github.workflows || []
-      workflows.forEach(repo => {
-        const github_pat = vm.configs.github.open_PAT
-        const api = `https://api.github.com/repos/${repo}/actions/runs`
-
-        const fetcher = function() {
-          axios.get(api, {
-            headers: {
-              'Authorization': `token ${github_pat}`
-            }
-          })
-          .then(res => {
-            const data = res.data
-            const workflow_runs = data['workflow_runs'] || []
-            const recent_runs__promise = workflow_runs
-            .slice(0, workflow_num).map(async (run) => {
-              const workflow_api = run.workflow_url
-              const workflow = await axios.get(workflow_api, {
-                headers: {
-                  'Authorization': `token ${github_pat}`
-                }
-              }).then(res => {
-                return res.data
-              })
-
-              const workflow_badge = workflow.badge_url
-              const workflow_name = workflow.name
-              const state = run.status + (run.conclusion ? ` (${run.conclusion})` : '')
-              const state2css = function(state) {
-                if (state.includes('progress'))
-                  return 'p-tag p-tag-info'
-                else if (state.includes('failure'))
-                  return 'p-tag p-tag-danger'
-                else if (state.includes('success'))
-                  return 'p-tag p-tag-success'
-                else
-                  return 'p-tag p-tag-warning'
-              };
-              return {
-                id: run.id,
-                state: state,
-                css_class: state2css(state),
-                head_branch: run.head_branch,
-                head_sha: run.head_sha.slice(0, 7),
-                created: dayjs(run.created_at).fromNow(),
-                updated: dayjs(run.updated_at).fromNow(),
-                url: run.html_url,
-                workflow_badge, workflow_name
-              }
-            })
-
-            Promise.all(recent_runs__promise).then(recent_runs => {
-              vm.gh_workflows.push({
-                repo: repo,
-                fetcher: fetcher,
-                recent_runs: recent_runs
-              })
-            })
-
-          })
-          .catch(err => {
-            console.log(err.toString())
-          })
-
-        }
-
-        fetcher()
-      })
     }
 
   },
@@ -521,7 +461,7 @@ module.exports = {
     return {
       logo: require('./resource/logo-128.png'),
 
-      gh_workflows: [],
+      gh_workflows: {},
 
       tasks: [],
       task_loading: false,
@@ -1159,7 +1099,90 @@ module.exports = {
       }
 
       this.center_dialog_show = false
-    }
+    },
+
+    updateWorkflows() {
+      const vm = this
+      const workflows = vm.configs.github.workflows || []
+
+      workflows.forEach(repo_ => {
+        const github_pat = vm.configs.github.open_PAT
+
+        const fetcher = function(repo) {
+          axios.get(`https://api.github.com/repos/${repo}/actions/runs`, {
+            headers: {
+              'Authorization': `token ${github_pat}`
+            }
+          })
+          .then(res => {
+            const data = res.data
+            const workflow_runs = data['workflow_runs'] || []
+            const recent_runs__promise = workflow_runs
+            .slice(0, workflow_num).map(async (run) => {
+              const workflow_api = run.workflow_url
+              const workflow = await axios.get(workflow_api, {
+                headers: {
+                  'Authorization': `token ${github_pat}`
+                }
+              }).then(res => {
+                return res.data
+              })
+
+              const workflow_badge = workflow.badge_url
+              const workflow_name = workflow.name
+              const state = run.status + (run.conclusion ? ` (${run.conclusion})` : '')
+              const state2css = function(state) {
+                if (state.includes('progress'))
+                  return 'p-tag p-tag-info'
+                else if (state.includes('failure'))
+                  return 'p-tag p-tag-danger'
+                else if (state.includes('success'))
+                  return 'p-tag p-tag-success'
+                else
+                  return 'p-tag p-tag-warning'
+              };
+              return {
+                id: run.id,
+                state: state,
+                css_class: state2css(state),
+                head_branch: run.head_branch,
+                head_sha: run.head_sha.slice(0, 7),
+                created: dayjs(run.created_at).fromNow(),
+                updated: dayjs(run.updated_at).fromNow(),
+                url: run.html_url,
+                workflow_badge, workflow_name
+              }
+            })
+
+            Promise.all(recent_runs__promise).then(recent_runs => {
+              const old = vm.gh_workflows[repo]
+              const gh_repo = {
+                repo: repo,
+                refresh: (old ? old.refresh : false),
+                fetcher: fetcher,
+                recent_runs: recent_runs
+              };
+              vm.gh_workflows[repo] = gh_repo
+            })
+
+          })
+          .catch(err => {
+            console.log(err.toString())
+          })
+
+        } /* end fetcher */
+
+        fetcher(repo_)
+      })
+
+      /* setup refresh timer */
+      Object.keys(this.gh_workflows).forEach(key => {
+        const gh_repo = vm.gh_workflows[key]
+        if (gh_repo.refresh) {
+          gh_repo.fetcher(gh_repo.repo)
+        }
+      })
+    } /* end function */
   }
 }
 </script>
