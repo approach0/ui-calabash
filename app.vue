@@ -34,20 +34,13 @@
     <Textarea v-model="top_dialog_content" class="top_dialog" :disabled="true"/>
   </Dialog>
 
-  <Dialog :header="center_dialog_for" v-model:visible="center_dialog_show" style="min-width: 500px"
-          @hide="onCenterDialogClose()">
+  <Dialog :header="center_dialog_for" v-model:visible="center_dialog_show" style="min-width: 500px">
     <div v-for="field in center_dialog_model[center_dialog_for]" :key="field.label">
       <h4> {{field.label}} </h4>
       <Listbox v-model="field.value" :options="field.options" optionLabel="name"/>
 
       <h4 v-if="field.value">Description:</h4>
       <pre style="overflow-x: auto">{{ field.value && field.value['desc'] }}</pre>
-
-      <div v-if="docker_fetcher && center_dialog_for === 'Create Service'">
-        <h4>{{docker_repo}} build state:</h4>
-        <Menu :model="docker_builds" style="width:100%"/>
-      </div>
-
     </div>
 
     <template #footer>
@@ -186,14 +179,27 @@
         </Fieldset>
 
         <Fieldset legend="Docker Builds" class="p-mt-4">
-          <Toolbar v-for="(srv, srvName) in services" :key="srvName">
-            <template v-slot:left>
-            {{srvName}}
-            </template>
-            <template v-slot:right>
-            {{srv.docker_image}}
-            </template>
-          </Toolbar>
+          <div v-for="build in builds" :key="build.service">
+            <h3>{{build.service}} ({{build.image}})</h3>
+
+            <DataTable :value="build.recent_runs" :scrollable="true" style="width: 100%">
+              <Column header="Commit">
+                <template #body="slotProps">
+                  <a :href="slotProps.data.url" target="_blank">{{slotProps.data.head_sha}}</a>
+                </template>
+              </Column>
+              <Column field="head_branch" header="Branch"></Column>
+              <Column field="created" header="Created"></Column>
+              <Column field="updated" header="Updated"></Column>
+              <Column field="state" header="State"></Column>
+              <Column header="Badge">
+                <template #body="slotProps">
+                  <img :src="slotProps.data.workflow_badge"/>
+                </template>
+              </Column>
+            </DataTable>
+          </div>
+
         </Fieldset>
 
       </div>
@@ -256,10 +262,6 @@ module.exports = {
     vm.updateConfigs()
     vm.updateJobList()
     vm.updateTaskList()
-
-    setTimeout(() => {
-      console.log(vm.services)
-    }, 3000)
   },
 
   watch: {
@@ -410,12 +412,11 @@ module.exports = {
           })
 
         } else if (field.label === 'Service') {
-          field.options = Object.keys(vm.services).map(key => {
-            const val = vm.services[key]
+          field.options = vm.services.map(srv => {
             return {
-              name: key,
-              meta: val,
-              desc: vm.prettyJSON(val)
+              name: srv.name,
+              meta: srv.meta,
+              desc: vm.prettyJSON(srv.meta)
             }
           })
 
@@ -426,65 +427,66 @@ module.exports = {
       })
     },
 
-    //selectedService: function(newValue) {
-    //  const selected = newValue || {meta:{}}
-    //  const docker_image = selected.meta['docker_image']
-    //  const vm = this
-    //  if (docker_image) {
-    //    const dockerhub_uri = docker_image.split(/[@:]/)[0]
-    //    const dockerhub_obj = encodeURIComponent(`/api/repo/v1/repository/${dockerhub_uri}/`)
-    //    const request_url = `${dockerhub_api}${dockerhub_obj}`
+    services: function() {
+      const vm = this
+      const github_pat = vm.configs.environment.github_pat
+      vm.builds = []
+      vm.services.forEach(srv => {
+        const img = srv.meta.docker_image
+        const api = `https://api.github.com/repos/${img}/actions/runs`
 
-    //    const buildsFetcher = function() {
-    //      axios.get(request_url)
-    //      .then(res => {
-    //        const data = res.data
-    //        const builds = data.objects.map(obj => {
-    //          return {
-    //            tag: obj.build_tag,
-    //            commit: obj.commit,
-    //            state: obj.state,
-    //            created: obj.created,
-    //            started: obj.start_date,
-    //            ended: obj.end_date
-    //          }
-    //        })
+        const fetcher = function() {
+          axios.get(api, {
+            headers: {
+              'Authorization': `token ${github_pat}`
+            }
+          })
+          .then(res => {
+            const data = res.data
+            const workflow_runs = data['workflow_runs'] || []
+            const recent_runs__promise = workflow_runs.slice(0, 3).map(async (run) => {
+              const workflow_api = run.workflow_url
+              const workflow = await axios.get(workflow_api, {
+                headers: {
+                  'Authorization': `token ${github_pat}`
+                }
+              }).then(res => {
+                return res.data
+              })
 
-    //        vm.docker_repo = dockerhub_uri
-    //        vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 8000))
-    //        vm.docker_builds = builds.map(build => {
-    //          const commit = build.commit.slice(0, 7)
-    //          const time = dayjs(build.ended).fromNow()
-    //          const time2color = function(time) {
-    //            if (time.includes('second')) {
-    //              return 'success'
-    //            } else if (time.includes('minute')) {
-    //              return 'info'
-    //            } else {
-    //              return 'warn'
-    //            }
-    //          };
-    //          return {
-    //            label: `[${build.state}] ${commit} ${build.tag} (${time})`,
-    //            class: 'p-inline-message p-inline-message-' + time2color(time),
-    //            command: function() {
-    //              const digest_url = dockerhub_digest.replace('<REPLACE>', dockerhub_uri)
-    //              //console.log('DIGEST can be found here: ' + digest_url)
-    //            }
-    //          }
-    //        })
-    //      })
-    //      .catch(err => {
-    //        vm.displayMessage('error', 'Error', err.toString())
-    //        vm.updateRecurFetcher('docker_fetcher')
-    //      })
-    //    };
+              const workflow_badge = workflow.badge_url
+              const workflow_name = workflow.name
+              return {
+                id: run.id,
+                state: `${run.status} (${run.conclusion})`,
+                head_branch: run.head_branch,
+                head_sha: run.head_sha.slice(0, 7),
+                created: dayjs(run.created_at).fromNow(),
+                updated: dayjs(run.updated_at).fromNow(),
+                url: run.html_url,
+                workflow_badge, workflow_name
+              }
+            })
 
-    //    vm.updateRecurFetcher('docker_fetcher', setTimeout(buildsFetcher, 0))
-    //  } else {
-    //    vm.updateRecurFetcher('docker_fetcher')
-    //  }
-    //}
+            Promise.all(recent_runs__promise).then(recent_runs => {
+              vm.builds.push({
+                service: srv.name,
+                image: img,
+                fetcher: fetcher,
+                recent_runs: recent_runs
+              })
+            })
+
+          })
+          .catch(err => {
+            console.error(err.toString())
+          })
+
+        }
+
+        fetcher()
+      })
+    }
 
   },
 
@@ -495,10 +497,13 @@ module.exports = {
       return Object.keys(raw_services).reduce((dict, key) => {
         const val = raw_services[key]
         if (!Array.isArray(val) && typeof(val) !== 'string') {
-          dict[key] = val
+          dict.push({
+            name: key,
+            meta: val
+          })
         }
         return dict
-      }, {})
+      }, [])
     },
 
     selectedService() {
@@ -509,6 +514,8 @@ module.exports = {
   data: function() {
     return {
       logo: require('./resource/logo-128.png'),
+
+      builds: [],
 
       tasks: [],
       task_loading: false,
@@ -557,10 +564,6 @@ module.exports = {
           }
         ]
       },
-
-      docker_repo: '',
-      docker_fetcher: null,
-      docker_builds: [],
 
       lastDisplayError: null,
 
@@ -1135,10 +1138,6 @@ module.exports = {
       }
     },
 
-    onCenterDialogClose() {
-      this.updateRecurFetcher('docker_fetcher')
-    },
-
     onCenterDialogConfirm() {
       const about = this.center_dialog_for
       const fields = this.center_dialog_model[about]
@@ -1147,9 +1146,9 @@ module.exports = {
         const usage = fields[0].value.name
         const iaasc = fields[1].value.name
         this.input_job = `swarm:expand?node_usage=${usage}&iaascfg=${iaasc}`
+
       } else if (about === 'Create Service') {
         const service = fields[0].value.name
-        this.updateRecurFetcher('docker_fetcher')
         this.input_job = `swarm:service-create?service=${service}`
       }
 

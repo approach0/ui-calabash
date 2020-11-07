@@ -28,7 +28,8 @@ body {
 }
 
 a {
-  text-decoration:none
+  text-decoration: none;
+  color: rgb(255, 128, 128);
 }
 
 .hspacer {
