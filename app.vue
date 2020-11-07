@@ -205,7 +205,8 @@
                   </div>
                 </template>
               </Toolbar>
-              <DataTable :value="wf.recent_runs" :scrollable="true" style="width: 100%">
+              <DataTable :value="wf.recent_runs" style="width: 100%"
+                         :scrollable="true" selectionMode="single">
                 <Column field="workflow_name" header="Workflow"></Column>
                 <Column field="head_branch" header="Branch"></Column>
                 <Column field="head_sha" header="Commit"></Column>
