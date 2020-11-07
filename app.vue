@@ -183,18 +183,17 @@
             <h4>{{wf.repo}}</h4>
             <DataTable :value="wf.recent_runs" :scrollable="true" style="width: 100%">
               <Column field="workflow_name" header="Workflow"></Column>
-              <Column field="head_sha" header="Commit"></Column>
               <Column field="head_branch" header="Branch"></Column>
+              <Column field="head_sha" header="Commit"></Column>
               <Column field="created" header="Created"></Column>
               <Column field="updated" header="Updated"></Column>
               <Column header="State">
                 <template #body="slotProps">
-                  <a :href="slotProps.data.url" target="_blank">{{slotProps.data.state}}</a>
-                </template>
-              </Column>
-              <Column header="Badge">
-                <template #body="slotProps">
-                  <img :src="slotProps.data.workflow_badge"/>
+                  <div :class="slotProps.data.css_class">
+                  <a :href="slotProps.data.url" target="_blank" style="color: white">
+                    {{slotProps.data.state}}
+                  </a>
+                  </div>
                 </template>
               </Column>
             </DataTable>
@@ -247,8 +246,8 @@
 
 <script>
 const calabash_url = CALABASH_URL
-const dockerhub_api = 'https://hub.docker.com/api/audit/v1/build/?include_related=true&offset=0&limit=5&object='
-const dockerhub_digest = 'https://hub.docker.com/v2/repositories/<REPLACE>/tags'
+const workflow_num = 6
+
 const axios = require('axios')
 const dayjs = require('dayjs')
 const relativeTime = require('dayjs/plugin/relativeTime')
@@ -443,7 +442,8 @@ module.exports = {
           .then(res => {
             const data = res.data
             const workflow_runs = data['workflow_runs'] || []
-            const recent_runs__promise = workflow_runs.slice(0, 3).map(async (run) => {
+            const recent_runs__promise = workflow_runs
+            .slice(0, workflow_num).map(async (run) => {
               const workflow_api = run.workflow_url
               const workflow = await axios.get(workflow_api, {
                 headers: {
@@ -455,9 +455,21 @@ module.exports = {
 
               const workflow_badge = workflow.badge_url
               const workflow_name = workflow.name
+              const state = run.status + (run.conclusion ? ` (${run.conclusion})` : '')
+              const state2css = function(state) {
+                if (state.includes('progress'))
+                  return 'p-tag p-tag-info'
+                else if (state.includes('failure'))
+                  return 'p-tag p-tag-danger'
+                else if (state.includes('success'))
+                  return 'p-tag p-tag-success'
+                else
+                  return 'p-tag p-tag-warning'
+              };
               return {
                 id: run.id,
-                state: `${run.status} (${run.conclusion})`,
+                state: state,
+                css_class: state2css(state),
                 head_branch: run.head_branch,
                 head_sha: run.head_sha.slice(0, 7),
                 created: dayjs(run.created_at).fromNow(),
@@ -502,10 +514,6 @@ module.exports = {
         }
         return dict
       }, [])
-    },
-
-    selectedService() {
-      return this.center_dialog_model['Create Service'][0].value
     }
   },
 
