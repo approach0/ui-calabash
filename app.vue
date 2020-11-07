@@ -178,20 +178,20 @@
           <ProgressBar mode="indeterminate" v-show="task_loading" class="bottom_progress"/>
         </Fieldset>
 
-        <Fieldset legend="Docker Builds" class="p-mt-4">
-          <div v-for="build in builds" :key="build.service">
-            <h3>{{build.service}} ({{build.image}})</h3>
-
-            <DataTable :value="build.recent_runs" :scrollable="true" style="width: 100%">
-              <Column header="Commit">
-                <template #body="slotProps">
-                  <a :href="slotProps.data.url" target="_blank">{{slotProps.data.head_sha}}</a>
-                </template>
-              </Column>
+        <Fieldset legend="Github Workflows" class="p-mt-4">
+          <div v-for="wf in gh_workflows" :key="wf.repo">
+            <h4>{{wf.repo}}</h4>
+            <DataTable :value="wf.recent_runs" :scrollable="true" style="width: 100%">
+              <Column field="workflow_name" header="Workflow"></Column>
+              <Column field="head_sha" header="Commit"></Column>
               <Column field="head_branch" header="Branch"></Column>
               <Column field="created" header="Created"></Column>
               <Column field="updated" header="Updated"></Column>
-              <Column field="state" header="State"></Column>
+              <Column header="State">
+                <template #body="slotProps">
+                  <a :href="slotProps.data.url" target="_blank">{{slotProps.data.state}}</a>
+                </template>
+              </Column>
               <Column header="Badge">
                 <template #body="slotProps">
                   <img :src="slotProps.data.workflow_badge"/>
@@ -199,7 +199,6 @@
               </Column>
             </DataTable>
           </div>
-
         </Fieldset>
 
       </div>
@@ -429,11 +428,11 @@ module.exports = {
 
     services: function() {
       const vm = this
-      const github_pat = vm.configs.environment.github_pat
-      vm.builds = []
-      vm.services.forEach(srv => {
-        const img = srv.meta.docker_image
-        const api = `https://api.github.com/repos/${img}/actions/runs`
+      vm.gh_workflows = []
+      const workflows = vm.configs.github.workflows || []
+      workflows.forEach(repo => {
+        const github_pat = vm.configs.github.open_PAT
+        const api = `https://api.github.com/repos/${repo}/actions/runs`
 
         const fetcher = function() {
           axios.get(api, {
@@ -469,9 +468,8 @@ module.exports = {
             })
 
             Promise.all(recent_runs__promise).then(recent_runs => {
-              vm.builds.push({
-                service: srv.name,
-                image: img,
+              vm.gh_workflows.push({
+                repo: repo,
                 fetcher: fetcher,
                 recent_runs: recent_runs
               })
@@ -479,7 +477,7 @@ module.exports = {
 
           })
           .catch(err => {
-            console.error(err.toString())
+            console.log(err.toString())
           })
 
         }
@@ -515,7 +513,7 @@ module.exports = {
     return {
       logo: require('./resource/logo-128.png'),
 
-      builds: [],
+      gh_workflows: [],
 
       tasks: [],
       task_loading: false,
