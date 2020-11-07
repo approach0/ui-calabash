@@ -809,7 +809,6 @@ module.exports = {
     updateTaskList() {
       const vm = this
       const taskFilter = this.taskFilter.name
-      vm.tasks = []
 
       function fetcher() {
         vm.task_loading = true
