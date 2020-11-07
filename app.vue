@@ -1172,14 +1172,9 @@ module.exports = {
 
         } /* end fetcher */
 
-        fetcher(repo_)
-      })
-
-      /* setup refresh timer */
-      Object.keys(this.gh_workflows).forEach(key => {
-        const gh_repo = vm.gh_workflows[key]
-        if (gh_repo.refresh) {
-          gh_repo.fetcher(gh_repo.repo)
+        const gh_repo = vm.gh_workflows[repo_]
+        if (gh_repo === undefined || gh_repo.refresh) {
+          fetcher(repo_)
         }
       })
     } /* end function */
