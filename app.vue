@@ -210,7 +210,7 @@
                   <template #body="slotProps">
                     <div :class="slotProps.data.css_class">
                     <a :href="slotProps.data.url" target="_blank"
-                       style="mix-blend-mode: difference;">
+                       style="filter: invert(1); color: white;">
                       {{slotProps.data.state}}
                     </a>
                     </div>
