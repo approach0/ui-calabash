@@ -707,6 +707,28 @@ module.exports = {
       return ''
     },
 
+    AjaxAuthPass(res) {
+      const contentType = res.headers['content-type']
+      if (contentType.includes('application/json')) {
+        return true
+      } else {
+        /* rewrite original AJAX target URL to this page */
+        const redirectURI = res.request.responseURL.split('?')[0]
+        const currentURL = window.location.href
+        const redirectURL = redirectURI + '?next=' + encodeURIComponent(currentURL)
+        setTimeout(function() {
+          window.location.replace(redirectURL)
+          /* replace() is better than `window.location.href = ...' because
+           * it does not keep the originating page in the session history,
+           * meaning the user won't get stuck in a never-ending back-button fiasco.
+           */
+        }, 3000)
+
+        throw new Error('No permission. Redirecting in a few seconds...')
+        return false
+      }
+    },
+
     updateConfigs() {
       const vm = this
       axios.get(`${calabash_url}/get/config`)
@@ -854,8 +876,7 @@ module.exports = {
 
       axios.post(`${calabash_url}/runjob`, options)
       .then(function (res) {
-        const contentType = res.headers['content-type']
-        if (contentType.includes('application/json')) {
+        if (vm.AjaxAuthPass(res)) {
           const ret = res.data
           vm.displayMessage('success', jobname, JSON.stringify(ret))
           vm.updateTaskList()
@@ -865,23 +886,7 @@ module.exports = {
             const taskID = ret['task_id']
             taskID && vm.onClickTaskLog(taskID)
           }
-
-        } else {
-          /* rewrite original AJAX target URL to this page */
-          const redirectURI = res.request.responseURL.split('?')[0]
-          const currentURL = window.location.href
-          const redirectURL = redirectURI + '?next=' + encodeURIComponent(currentURL)
-          setTimeout(function() {
-            window.location.replace(redirectURL)
-            /* replace() is better than `window.location.href = ...' because
-             * it does not keep the originating page in the session history,
-             * meaning the user won't get stuck in a never-ending back-button fiasco.
-             */
-          }, 3000)
-
-          throw new Error('No permission. Redirecting in a few seconds...')
         }
-
       })
       .catch(function (err) {
         vm.displayMessage('error', 'Error', err.toString())
@@ -914,11 +919,13 @@ module.exports = {
     onClickTasksCleanup() {
       axios.delete(`${calabash_url}/del/inactive_tasks`)
       .then(res => {
-        const data = res.data
-        if (data.error)
-          throw new Error(data.error)
+        if (vm.AjaxAuthPass(res)) {
+          const data = res.data
+          if (data.error)
+            throw new Error(data.error)
 
-        vm.displayMessage('success', JSON.stringify(data))
+          vm.displayMessage('success', JSON.stringify(data))
+        }
       })
       .catch(err => {
         vm.displayMessage('error', err.toString())
@@ -928,11 +935,13 @@ module.exports = {
     onClickDeleteTask(taskID) {
       axios.delete(`${calabash_url}/del/task/${taskID}`)
       .then(res => {
-        const data = res.data
-        if (data.error)
-          throw new Error(data.error)
+        if (vm.AjaxAuthPass(res)) {
+          const data = res.data
+          if (data.error)
+            throw new Error(data.error)
 
-        vm.displayMessage('success', taskID, JSON.stringify(data))
+          vm.displayMessage('success', taskID, JSON.stringify(data))
+        }
       })
       .catch(err => {
         vm.displayMessage('error', err.toString())
