@@ -55,5 +55,4 @@ Usually the initial bunch of jobs you need to run:
 9. Create other peripheral services (such as `corpus_syncd` and `crawler`)
 
 ### Free node resources
-You may run into releasing bootstrap node when you try to free some IaaS nodes, in this case calabash UI can be very
-useful to be hosted locally again, such that it will not happen a node is manipulating calabash to free itself.
+When you are about to release all nodes including the bootstrap node, you will run into releasing calabash service whose hosted node is about to be deleted by itself, in this case hosting a local calabash service (including its UI) can be very handy, since now you can manipulate everything remotely without shooting  yourself in the foot.
