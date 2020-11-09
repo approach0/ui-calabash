@@ -150,11 +150,14 @@
         <Fieldset legend="Calabash Tasks" class="p-mt-4" style="position: relative">
           <Toolbar>
             <template v-slot:right>
-              <Button class="p-button-raised p-mr-4" label="Master Logs"
+              <Dropdown v-model="taskFilter" class="p-m-2" :options="taskFilterOptions"
+                        optionLabel="optionName" placeholder="Filter tasks"/>
+
+              <Button class="p-button-raised p-m-2" label="Master Logs"
                icon="las la-terminal" @click="showConsole('log/MASTER')"/>
 
-              <Dropdown v-model="taskFilter" :options="taskFilterOptions"
-                        optionLabel="optionName" placeholder="Filter tasks"/>
+              <Button class="p-button-raised p-button-secondary p-m-2" label="Cleanup Tasks"
+               icon="las la-trash" @click="onClickTasksCleanup()"/>
             </template>
           </Toolbar>
 
@@ -169,10 +172,12 @@
               </div>
             </template>
             <template v-slot:right>
-              <Button class="p-button-text" icon="las la-terminal"
+              <Button class="p-button-text p-m-2" icon="las la-terminal"
                @click="onClickTaskLog(task.taskid)"/>
-              <Button class="p-button-text p-ml-2" icon="las la-user-secret"
+              <Button class="p-button-text p-m-2" icon="las la-user-secret"
                @click="onClickLog('task', task.taskid)"/>
+              <Button class="p-button-text p-m-2" icon="las la-times"
+               @click="onClickDeleteTask(task.taskid)"/>
             </template>
           </Toolbar>
 
@@ -487,7 +492,8 @@ module.exports = {
       taskFilter: {name: 'recent'},
       taskFilterOptions: [
         {name: 'recent', optionName: 'Recent and active tasks'},
-        {name: 'active', optionName: 'Only active tasks'}
+        {name: 'active', optionName: 'Only active tasks'},
+        {name: 'inactive', optionName: 'Only inactive tasks'}
       ],
 
       configs: {},
@@ -903,6 +909,34 @@ module.exports = {
         logs += taskJob['log']
         return logs
       }, '')
+    },
+
+    onClickTasksCleanup() {
+      axios.delete(`${calabash_url}/del/inactive_tasks`)
+      .then(res => {
+        const data = res.data
+        if (data.error)
+          throw new Error(data.error)
+
+        vm.displayMessage('success', JSON.stringify(data))
+      })
+      .catch(err => {
+        vm.displayMessage('error', err.toString())
+      })
+    },
+
+    onClickDeleteTask(taskID) {
+      axios.delete(`${calabash_url}/del/task/${taskID}`)
+      .then(res => {
+        const data = res.data
+        if (data.error)
+          throw new Error(data.error)
+
+        vm.displayMessage('success', taskID, JSON.stringify(data))
+      })
+      .catch(err => {
+        vm.displayMessage('error', err.toString())
+      })
     },
 
     consoleStickToBottom() {
