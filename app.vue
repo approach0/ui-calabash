@@ -1031,7 +1031,13 @@ module.exports = {
             }
           })
           .map(node => {
-            const label = `${node.Spec.Role} ${node.Status.Addr} ${node.inject_labels}`
+            let leader = ''
+            let address = node.Status.Addr
+            if (node.ManagerStatus) {
+              address = node.ManagerStatus.Addr.split(':')[0]
+              leader = node.ManagerStatus.Leader && '(leader)'
+            }
+            const label = `${node.Spec.Role} ${leader} ${address} ${node.inject_labels}`
             return {
               icon: 'las la-brain',
               label: label,
