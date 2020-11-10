@@ -872,13 +872,16 @@ module.exports = {
       .then(function (res) {
         const contentType = res.headers['content-type']
         if (contentType.includes('application/json')) {
-          const ret = res.data
-          vm.displayMessage('success', jobname, JSON.stringify(ret))
+          const data = res.data
+          if (data.error)
+            throw new Error(data.error)
+
+          vm.displayMessage('success', jobname, JSON.stringify(data))
           vm.updateTaskList()
 
           /* do we open console to follow logs? */
           if (follow) {
-            const taskID = ret['task_id']
+            const taskID = data['task_id']
             taskID && vm.onClickTaskLog(taskID)
           }
         } else {
@@ -923,7 +926,7 @@ module.exports = {
         vm.displayMessage('success', JSON.stringify(data))
       })
       .catch(err => {
-        if (err.response.status === 405)
+        if (err.response && err.response.status === 405)
           vm.loginRedirect(err)
         else
           vm.displayMessage('error', err.toString())
@@ -940,7 +943,7 @@ module.exports = {
         vm.displayMessage('success', taskID, JSON.stringify(data))
       })
       .catch(err => {
-        if (err.response.status === 405)
+        if (err.response && err.response.status === 405)
           vm.loginRedirect(err)
         else
           vm.displayMessage('error', err.toString())
