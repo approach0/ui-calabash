@@ -709,9 +709,8 @@ module.exports = {
 
     AjaxAuthPass(res) {
       const contentType = res.headers['content-type']
-      if (contentType.includes('application/json')) {
-        return true
-      } else {
+      console.log('[AjaxAuthPass]', res)
+      if (!contentType.includes('application/json') || res.status === 405) {
         /* rewrite original AJAX target URL to this page */
         const redirectURI = res.request.responseURL.split('?')[0]
         const currentURL = window.location.href
@@ -727,6 +726,8 @@ module.exports = {
         throw new Error('No permission. Redirecting in a few seconds...')
         return false
       }
+
+      return true
     },
 
     updateConfigs() {
