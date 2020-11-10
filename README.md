@@ -24,9 +24,8 @@ $ npm run watch
 In calabash repo, run a calabash daemon for bootstrap
 ```
 # node ./jobd/jobd.js --config ./config.toml --no-looptask
-# node cli/cli.js -j 'swarm:bootstrap?node_usage=persistent&iaascfg=ucloud_config_2'
+# node cli/cli.js -j 'swarm:bootstrap?node_usage=persistent&iaascfg=linode_config_1'
 ```
-(Use a higher performance node `ucloud_config_2` for hosting swarm manager with at least 2 GiB memory)
 
 There are five essential services to be bootstrapped in this process:
 
