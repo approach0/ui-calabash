@@ -156,7 +156,7 @@
               <Button class="p-button-raised p-m-2" label="Master Logs"
                icon="las la-terminal" @click="showConsole('log/MASTER')"/>
 
-              <Button class="p-button-raised p-button-secondary p-m-2" label="Cleanup Tasks"
+              <Button class="p-button-raised p-button-secondary p-m-2" label="Tasks Cleanup"
                icon="las la-trash" @click="onClickTasksCleanup()"/>
             </template>
           </Toolbar>
