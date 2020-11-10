@@ -707,27 +707,20 @@ module.exports = {
       return ''
     },
 
-    AjaxAuthPass(res) {
-      const contentType = res.headers['content-type']
-      console.log('[AjaxAuthPass]', res)
-      if (!contentType.includes('application/json') || res.status === 405) {
-        /* rewrite original AJAX target URL to this page */
-        const redirectURI = res.request.responseURL.split('?')[0]
-        const currentURL = window.location.href
-        const redirectURL = redirectURI + '?next=' + encodeURIComponent(currentURL)
-        setTimeout(function() {
-          window.location.replace(redirectURL)
-          /* replace() is better than `window.location.href = ...' because
-           * it does not keep the originating page in the session history,
-           * meaning the user won't get stuck in a never-ending back-button fiasco.
-           */
-        }, 3000)
+    loginRedirect(axiosRet) {
+      /* rewrite original AJAX target URL to this page */
+      const redirectURI = axiosRet.request.responseURL.split('?')[0]
+      const currentURL = window.location.href
+      const redirectURL = redirectURI + '?next=' + encodeURIComponent(currentURL)
+      setTimeout(function() {
+        window.location.replace(redirectURL)
+        /* replace() is better than `window.location.href = ...' because
+         * it does not keep the originating page in the session history,
+         * meaning the user won't get stuck in a never-ending back-button fiasco.
+         */
+      }, 3000)
 
-        throw new Error('No permission. Redirecting in a few seconds...')
-        return false
-      }
-
-      return true
+      this.displayMessage('error', 'No permission', 'Redirecting in a few seconds...')
     },
 
     updateConfigs() {
@@ -877,7 +870,8 @@ module.exports = {
 
       axios.post(`${calabash_url}/runjob`, options)
       .then(function (res) {
-        if (vm.AjaxAuthPass(res)) {
+        const contentType = res.headers['content-type']
+        if (contentType.includes('application/json')) {
           const ret = res.data
           vm.displayMessage('success', jobname, JSON.stringify(ret))
           vm.updateTaskList()
@@ -887,6 +881,8 @@ module.exports = {
             const taskID = ret['task_id']
             taskID && vm.onClickTaskLog(taskID)
           }
+        } else {
+          vm.loginRedirect(res)
         }
       })
       .catch(function (err) {
@@ -920,32 +916,34 @@ module.exports = {
     onClickTasksCleanup() {
       axios.delete(`${calabash_url}/del/inactive_tasks`)
       .then(res => {
-        if (vm.AjaxAuthPass(res)) {
-          const data = res.data
-          if (data.error)
-            throw new Error(data.error)
+        const data = res.data
+        if (data.error)
+          throw new Error(data.error)
 
-          vm.displayMessage('success', JSON.stringify(data))
-        }
+        vm.displayMessage('success', JSON.stringify(data))
       })
       .catch(err => {
-        vm.displayMessage('error', err.toString())
+        if (err.response.status === 405)
+          vm.loginRedirect(err)
+        else
+          vm.displayMessage('error', err.toString())
       })
     },
 
     onClickDeleteTask(taskID) {
       axios.delete(`${calabash_url}/del/task/${taskID}`)
       .then(res => {
-        if (vm.AjaxAuthPass(res)) {
-          const data = res.data
-          if (data.error)
-            throw new Error(data.error)
+        const data = res.data
+        if (data.error)
+          throw new Error(data.error)
 
-          vm.displayMessage('success', taskID, JSON.stringify(data))
-        }
+        vm.displayMessage('success', taskID, JSON.stringify(data))
       })
       .catch(err => {
-        vm.displayMessage('error', err.toString())
+        if (err.response.status === 405)
+          vm.loginRedirect(err)
+        else
+          vm.displayMessage('error', err.toString())
       })
     },
 
