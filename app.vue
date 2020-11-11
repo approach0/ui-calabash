@@ -1035,7 +1035,7 @@ module.exports = {
             let address = node.Status.Addr
             if (node.ManagerStatus) {
               address = node.ManagerStatus.Addr.split(':')[0]
-              leader = node.ManagerStatus.Leader && '(leader)'
+              leader = node.ManagerStatus.Leader && '(leader)' || ''
             }
             const label = `${node.Spec.Role} ${leader} ${address} ${node.inject_labels}`
             return {
