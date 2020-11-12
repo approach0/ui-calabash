@@ -25,6 +25,33 @@
 
       <Button icon="pi pi-cog" class="p-button-text p-button-rounded" @click="showConfigs"/>
     </div>
+
+    <div class="p-col-12 p-md-12 p-lg-12" v-if="tabViewActiveIndex === 5">
+      <Toolbar>
+        <template v-slot:left>
+          <div class="p-grid p-pt-4">
+            <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
+              @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
+
+            <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
+              @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
+
+            <Button v-for="item in clusterTreeSelModel" :key="item.label"
+              class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
+              @click="input_job = item.query" />
+          </div>
+        </template>
+        <template v-slot:right>
+          <div class="p-grid p-pt-4 p-pr-4 p-ai-center">
+            <i class="las la-tree"></i>
+            Top-level
+            <i class="hspacer"></i>
+            <InputSwitch v-model="clusterTreeTopLevel"/>
+          </div>
+        </template>
+      </Toolbar>
+    </div>
+
   </div>
 
   <Toast position="top-right"/>
@@ -59,7 +86,7 @@
     <div style="flex-grow: 1;" class="p-d-flex p-jc-center">
       <div class="main">
         <Fieldset legend="Server List" class="p-mt-4">
-          <TabView>
+          <TabView v-model:activeIndex="tabViewActiveIndex">
 
             <TabPanel header="Blank">
             </TabPanel>
@@ -116,30 +143,6 @@
             </TabPanel>
 
             <TabPanel header="Cluster Tree">
-              <Toolbar>
-                <template v-slot:left>
-                  <div class="p-grid">
-                    <Button class="p-mx-2 p-button-text" label="Add node" icon="las la-server"
-                      @click="center_dialog_show = true; center_dialog_for = 'Add Node'"/>
-
-                    <Button class="p-mx-2 p-button-text" label="Create service" icon="las la-microchip"
-                      @click="center_dialog_show = true; center_dialog_for = 'Create Service'"/>
-
-                    <Button v-for="item in clusterTreeSelModel" :key="item.label"
-                      class="p-mx-2 p-button-text" :label="item.label" :icon="item.icon"
-                      @click="input_job = item.query" />
-                  </div>
-                </template>
-                <template v-slot:right>
-                  <div class="p-m-2">
-                    <i class="las la-tree"></i>
-                    Top-level
-                    <i class="hspacer"></i>
-                    <InputSwitch v-model="clusterTreeTopLevel"/>
-                  </div>
-                </template>
-              </Toolbar>
-
               <Tree :value="clusterTree" selectionMode="single" v-model:selectionKeys="clusterTreeSel">
               </Tree>
             </TabPanel>
@@ -504,6 +507,8 @@ module.exports = {
 
       selectedHistory: '',
       jobHistory: [],
+
+      tabViewActiveIndex: 0,
 
       top_dialog_show: false,
       top_dialog_title: '',
