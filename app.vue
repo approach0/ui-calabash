@@ -324,7 +324,13 @@ module.exports = {
       newTasks.forEach((task) => {
         /* copy run list */
         const runList = JSON.parse(JSON.stringify(task.runList))
-        runList.push({}) /* allocate an extra item to ensure item[0] and [1] are accessible */
+        /* allocate an pseudo item to ensure item[0] and [1] are accessible */
+        runList.push({exitcode: 0})
+
+        /* prohibit loading task output from unfinished job */
+        if (runList.some(j => j.exitcode !== 0)) {
+          return
+        }
 
         if (task.taskid == 1) {
           const log = runList[1].log || ''
