@@ -23,7 +23,8 @@ body {
   background-color: var(--surface-b);
 }
 
-.las {
+/* line-awesome */
+.las,.lab {
   font-size: 1.5em;
 }
 

@@ -2,7 +2,7 @@
   <div class="p-grid p-jc-between p-ai-center topbar">
     <div class="p-col-12 p-md-4 p-lg-3 p-d-flex p-ai-center">
       <img style="width: 64px; height: 64px;" :src="logo"/>
-      <h2 class="p-ml-4">Calabash Panel</h2>
+      <h2 class="p-ml-4 logo">Calabash Panel</h2>
     </div>
 
     <div class="p-col-12 p-md-8 p-lg-6 p-input-icon-left p-d-flex p-ai-center">
@@ -24,6 +24,7 @@
       </div>
 
       <Button icon="pi pi-cog" class="p-button-text p-button-rounded" @click="showConfigs"/>
+      <Button icon="lab la-github" class="p-button-text p-button-rounded" @click="onClickGithub"/>
     </div>
 
     <div class="p-col-12 p-md-12 p-lg-12" v-if="tabViewActiveIndex === 5">
@@ -1254,12 +1255,25 @@ module.exports = {
           fetcher(repo_)
         }
       })
-    } /* end function */
+    }, /* end function */
+
+    onClickGithub() {
+      window.open('https://github.com/approach0/ui-calabash', '_blank')
+    }
   }
 }
 </script>
 
 <style>
+.logo {
+  color: #ff4a4a;
+  font-family: sans-serif;
+  font-size: 23px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
 div.topbar {
   z-index:999;
   box-shadow: 0 0 4px rgba(0,0,0,.25);
