@@ -264,6 +264,14 @@
         <Checkbox v-model="console_stickbt" :binary="true"/>
       </div>
 
+      <div class="p-d-flex p-ai-center">
+        <span class="p-mr-2">
+          <i class="pi pi-palette"></i>
+          Use Xterm
+        </span>
+        <Checkbox v-model="use_xterm" :binary="true"/>
+      </div>
+
       <div>
         <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
                 @click="console_full=!console_full"/>
@@ -274,7 +282,10 @@
 
     <div style="height: 100%; position: relative" class="p-mt-3">
       <ProgressBar mode="indeterminate" v-show="console_loading" style="z-index:9"/>
-      <pre id="console" class="console p-shadow-4 abstop">{{console_content}}</pre>
+      <div v-if="use_xterm" id="xterm_console" class="p-shadow-4 abstop"></div>
+      <pre v-else id="console" class="console p-shadow-4 abstop">
+        {{console_content}}
+      </pre>
     </div>
   </Sidebar>
 
@@ -285,9 +296,12 @@ const calabash_url = CALABASH_URL
 const workflow_num = 6
 
 const axios = require('axios')
+
 const dayjs = require('dayjs')
 const relativeTime = require('dayjs/plugin/relativeTime')
 dayjs.extend(relativeTime)
+
+const Terminal = require('xterm').Terminal
 
 module.exports = {
   mounted: function() {
@@ -299,9 +313,32 @@ module.exports = {
 
     setTimeout(vm.updateWorkflows, 1 * 1000)
     setInterval(vm.updateWorkflows, 10 * 1000)
+
+    vm.xterm = new Terminal({
+      disableStdin: true,
+      cols: 160,
+      convertEol: true
+    })
   },
 
   watch: {
+    use_xterm: function(inUse) {
+      if (inUse) {
+        this.$nextTick(function() {
+          this.xterm.open(document.getElementById('xterm_console'))
+          this.xterm.clear()
+          this.xterm.write(this.console_content)
+        })
+      }
+    },
+
+    console_content: function(newContent) {
+      if (this.use_xterm) {
+        this.xterm.clear()
+        this.xterm.write(this.console_content)
+      }
+    },
+
     nightTheme: function(becomeNightTheme, _) {
       if (becomeNightTheme) {
         this.changeTheme('night.css')
@@ -593,6 +630,8 @@ module.exports = {
       cluster_services: [],
       cluster_tasks: [],
 
+      xterm: null,
+      use_xterm: false,
       console_full: false,
       console_refresh: true,
       console_stickbt: true,

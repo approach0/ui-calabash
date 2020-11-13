@@ -9,6 +9,9 @@ import 'primeflex/primeflex.css'
 import './customization.css'
 import 'line-awesome/dist/line-awesome/css/line-awesome.min.css'
 
+import 'xterm/css/xterm.css'
+import 'xterm/lib/xterm.js'
+
 const app = createApp(App)
 
 import InputSwitch from 'primevue/inputswitch'
