@@ -332,10 +332,22 @@ module.exports = {
       }
     },
 
-    console_content: function(newContent) {
+    console_content: function(newContent, oldContent) {
       if (this.use_xterm) {
-        this.xterm.clear()
-        this.xterm.write(this.console_content)
+        if (newContent.startsWith(oldContent)) {
+          const appendContent = newContent.slice(oldContent.length)
+          this.xterm.write(appendContent)
+        } else {
+          this.xterm.clear()
+          this.xterm.write(newContent)
+        }
+
+        if (this.console_stickbt) {
+          const vm = this
+          setTimeout(function() {
+            vm.xterm.scrollToBottom()
+          }, 100)
+        }
       }
     },
 
