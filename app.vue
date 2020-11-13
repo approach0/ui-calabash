@@ -317,7 +317,7 @@ module.exports = {
     vm.xterm = new Terminal({
       disableStdin: true,
       cols: 160,
-      convertEol: true
+      convertEol: true /* important to make newline alignment correct */
     })
   },
 
