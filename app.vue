@@ -245,7 +245,7 @@
   <!-- placeholder to compensate bottom overlay console -->
   <div style="height: 500px"></div>
 
-  <Sidebar :visible="console_fetcher !== null" class="p-sidebar-lg" :showCloseIcon="false"
+  <Sidebar :visible="console_show" class="p-sidebar-lg" :showCloseIcon="false"
            :position="console_full ? 'full' : 'bottom'" :modal="false">
     <div class="p-grid p-fluid p-jc-between console_head">
       <h4 class="p-ml-4">{{console_title}}</h4>
@@ -278,7 +278,7 @@
         <Button class="p-button-text" :icon="console_full ? 'las la-download' : 'las la-upload'"
                 @click="console_full=!console_full"/>
         <Button class="p-button-text" icon="las la-times"
-                @click="updateRecurFetcher('console_fetcher')"/>
+                @click="updateRecurFetcher('console_fetcher'); console_show = false"/>
       </div>
     </div>
 
@@ -646,6 +646,7 @@ module.exports = {
 
       xterm: null,
       use_xterm: false,
+      console_show: false,
       console_full: false,
       console_refresh: true,
       console_stickbt: true,
@@ -1024,12 +1025,16 @@ module.exports = {
       /* fetch_uri: 'log/:logid' or 'task/:taskid' */
       const vm = this
       const [type, _] = fetch_uri.split('/')
+      vm.console_show = true
       vm.console_full = false
       vm.console_title = fetch_uri + (idx === undefined ? '' : `/job[${idx}]`)
       vm.console_content = ''
 
       const fetcher = function() {
-        if (!vm.console_refresh) {
+        if (!vm.console_show) {
+          return
+
+        } else if (!vm.console_refresh) {
           vm.updateRecurFetcher('console_fetcher', setTimeout(fetcher, 2000))
           return
         }
