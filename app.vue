@@ -196,16 +196,14 @@
               <InputText type="text" placeholder="Filter Repository ..." v-model="gh_filter"/>
             </template>
           </Toolbar>
-          <div v-for="(wf, key) in gh_workflows" :key="key" style="position: relative">
+          <div v-for="(wf, key) in gh_workflows" :key="key" style="position: relative" class="p-py-6">
             <div v-show="gh_filter.trim() === '' || key.includes(gh_filter)">
               <ProgressBar mode="indeterminate" v-show="wf.loading" class="bottom_progress"/>
               <Toolbar>
                 <template v-slot:left>
-                  <h3>
-                    <i class="las la-plug"></i>
-                    <i class="hspacer"></i>
-                    <a :href="'https://github.com/' + wf.repo" target="_blank">{{wf.repo}}</a>
-                  </h3>
+                  <i class="lab la-github-alt"></i>
+                  <i class="hspacer"></i>
+                  <a :href="'https://github.com/' + wf.repo" target="_blank">{{wf.repo}}</a>
                 </template>
                 <template v-slot:right>
                   <div class="p-m-2">
