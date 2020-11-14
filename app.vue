@@ -196,8 +196,8 @@
               <InputText type="text" placeholder="Filter Repository ..." v-model="gh_filter"/>
             </template>
           </Toolbar>
-          <div v-for="(wf, key) in gh_workflows" :key="key" style="position: relative" class="p-py-6">
-            <div v-show="gh_filter.trim() === '' || key.includes(gh_filter)">
+          <div v-for="(wf, key) in gh_workflows" :key="key" style="position: relative">
+            <div v-show="gh_filter.trim() === '' || key.includes(gh_filter)" class="p-py-6">
               <ProgressBar mode="indeterminate" v-show="wf.loading" class="bottom_progress"/>
               <Toolbar>
                 <template v-slot:left>
