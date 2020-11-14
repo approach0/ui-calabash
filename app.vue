@@ -42,14 +42,6 @@
               @click="input_job = item.query" />
           </div>
         </template>
-        <template v-slot:right>
-          <div class="p-grid p-pt-4 p-pr-4 p-ai-center">
-            <i class="las la-tree"></i>
-            Top-level
-            <i class="hspacer"></i>
-            <InputSwitch v-model="clusterTreeTopLevel"/>
-          </div>
-        </template>
       </Toolbar>
     </div>
 
@@ -144,6 +136,16 @@
             </TabPanel>
 
             <TabPanel header="Cluster Tree">
+              <Toolbar>
+                <template v-slot:right>
+                  <div class="p-grid p-pt-4 p-pr-4 p-ai-center">
+                    <i class="las la-tree"></i>
+                    Top-level
+                    <i class="hspacer"></i>
+                    <InputSwitch v-model="clusterTreeTopLevel"/>
+                  </div>
+                </template>
+              </Toolbar>
               <Tree :value="clusterTree" selectionMode="single" v-model:selectionKeys="clusterTreeSel">
               </Tree>
             </TabPanel>
