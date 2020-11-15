@@ -1218,7 +1218,7 @@ module.exports = {
           }, {
             label: 'Remove label',
             icon: 'las la-cut',
-            query: `swarm:service-label-rm?service=${arg1}&label=FOO=BAR`
+            query: `swarm:service-label-rm?service=${arg1}&labelkey=FOO`
           }]
 
         } else {
