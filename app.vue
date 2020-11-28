@@ -1211,7 +1211,7 @@ module.exports = {
             label: 'Service logs',
             icon: 'las la-terminal',
             query: `swarm:service-logs?service=${arg1}`
-          }, {
+          } /* , {
             label: 'Set label',
             icon: 'las la-tag',
             query: `swarm:service-label-set?service=${arg1}&label=FOO=BAR`
@@ -1219,7 +1219,7 @@ module.exports = {
             label: 'Remove label',
             icon: 'las la-cut',
             query: `swarm:service-label-rm?service=${arg1}&labelkey=FOO`
-          }]
+          } */ ]
 
         } else {
           console.error('Unexpected clusterTreeSel', clusterTreeSel)
