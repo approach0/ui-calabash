@@ -1204,6 +1204,10 @@ module.exports = {
             icon: 'las la-sync',
             query: `swarm:service-update?service=${arg1}`
           }, {
+            label: 'Scale service',
+            icon: 'las la-layer-group',
+            query: `swarm:service-scale?service=${arg1}&replicas=NUM_REPLICAS`
+          }, {
             label: 'Remove service',
             icon: 'las la-trash',
             query: `swarm:rm-service?service=${arg1}`
@@ -1211,10 +1215,6 @@ module.exports = {
             label: 'Service logs',
             icon: 'las la-terminal',
             query: `swarm:service-logs?service=${arg1}`
-          }, {
-            label: 'Scale service',
-            icon: 'las la-layer-group',
-            query: `swarm:service-scale?service=${arg1}&replicas=NUM_REPLICAS`
           } /* , {
             label: 'Set label',
             icon: 'las la-tag',
