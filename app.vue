@@ -8,7 +8,7 @@
     <div class="p-col-12 p-md-8 p-lg-6 p-input-icon-left p-d-flex p-ai-center">
       <i class="pi pi-caret-right p-pl-3"></i>
       <InputText type="text" v-model="input_job" style="flex-grow: 1;"
-       placeholder="Run job from here ..." class="p-inputtext-sm p-m-2"/>
+       placeholder="Run job ..." class="p-inputtext-sm p-m-2"/>
       <SplitButton label="Run" :model="run_btn_model" @click="runJob()"/>
       <SplitButton label="Info" class="p-ml-2 p-button-secondary" :model="log_btn_model"
        @click="showJob()"/>
