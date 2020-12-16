@@ -1196,6 +1196,14 @@ module.exports = {
             label: 'Remove label',
             icon: 'las la-cut',
             query: `swarm:node-label-rm?swarmNode=${arg1}&labelkey=FOO`
+          }, {
+            label: 'Drain',
+            icon: 'las la-expand-arrows-alt',
+            query: `swarm:node-update-availability?swarmNode=${arg1}&availability=drain`
+          }, {
+            label: 'Set available',
+            icon: 'las la-expand',
+            query: `swarm:node-update-availability?swarmNode=${arg1}&availability=active`
           }]
 
         } else if (level === '2') {
