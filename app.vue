@@ -1206,7 +1206,7 @@ module.exports = {
             icon: 'las la-expand-arrows-alt',
             query: `swarm:node-update-availability?swarmNode=${arg1}&availability=drain`
           }, {
-            label: 'Set available',
+            label: 'Make available',
             icon: 'las la-expand',
             query: `swarm:node-update-availability?swarmNode=${arg1}&availability=active`
           }]
