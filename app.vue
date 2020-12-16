@@ -1105,11 +1105,12 @@ module.exports = {
               address = node.ManagerStatus.Addr.split(':')[0]
               leader = node.ManagerStatus.Leader && '(leader)' || ''
             }
-            const label = `${node.Spec.Role} ${leader} ${address} ${node.inject_labels}`
+            const drain = (node.Spec.Availability == 'active') ? '' : '(drain)'
+            const label = `${node.Spec.Role} ${leader} ${drain} ${address} ${node.inject_labels}`
             return {
               icon: 'las la-brain',
               label: label,
-              key: [level, node.ID].join(),
+              key: [level, node.ID, address].join(),
               children: vm.updateClusterTree(level + 1, node.ID)
             }
           })
@@ -1181,6 +1182,10 @@ module.exports = {
 
         } else if (level === '1') {
           this.clusterTreeSelModel = [{
+            label: 'Address',
+            icon: 'las la-phone',
+            query: `${arg2}`
+          }, {
             label: 'Promote',
             icon: 'las la-angle-double-up',
             query: `swarm:node-promote?swarmNode=${arg1}`
