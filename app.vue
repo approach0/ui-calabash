@@ -1225,6 +1225,10 @@ module.exports = {
             icon: 'las la-trash',
             query: `swarm:rm-service?service=${arg1}`
           }, {
+            label: 'Remove services',
+            icon: 'las la-radiation-alt',
+            query: `swarm:rm-services?service_prefix=${arg1}___`
+          }, {
             label: 'Service logs',
             icon: 'las la-terminal',
             query: `swarm:service-logs?service=${arg1}`
