@@ -1278,7 +1278,8 @@ module.exports = {
           const randtok = Math.random().toString(36).substr(2)
           axios.get(`https://api.github.com/repos/${repo}/actions/runs?r=${randtok}`, {
             headers: {
-              'Authorization': `token ${github_pat}`
+              'Authorization': `token ${github_pat}`,
+              'Accept': 'application/vnd.github.v3+json'
             }
           })
           .then(res => {
