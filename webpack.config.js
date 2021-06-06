@@ -16,6 +16,7 @@ const PORT = 19985
 module.exports = (env, options) => {
   const mode = options.mode;
   console.log(`[ this is ${mode} mode, listen port = ${PORT} ]`);
+  console.log(`CALABASH_URL=${process.env.CALABASH_URL}`)
 
   return {
     /* default is development mode, run 'yarn run build' for production. */
@@ -63,14 +64,14 @@ module.exports = (env, options) => {
             // Requires sass-loader@^7.0.0
             options: {
               implementation: require('sass'),
-              fiber: require('fibers'),
+              //fiber: require('fibers'),
               indentedSyntax: true // optional
             },
             // Requires sass-loader@^8.0.0
             options: {
               implementation: require('sass'),
               sassOptions: {
-                fiber: require('fibers'),
+                //fiber: require('fibers'),
                 indentedSyntax: true // optional
               },
             },
