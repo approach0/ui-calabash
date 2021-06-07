@@ -1399,6 +1399,7 @@ div.console_head {
 
 div.p-sidebar-content {
   height: calc(100% - 3rem);
+  overflow-y: initial;
 }
 
 td {
