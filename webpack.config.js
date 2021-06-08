@@ -14,8 +14,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const PORT = 19985
 
 module.exports = (env, options) => {
-  const mode = options.mode;
-  console.log(`[ this is ${mode} mode, listen port = ${PORT} ]`);
+  const mode = options.mode
+  console.log(`[ this is ${mode} mode, listen port = ${PORT} ]`)
   console.log(`CALABASH_URL=${process.env.CALABASH_URL}`)
 
   return {

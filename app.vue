@@ -742,6 +742,10 @@ module.exports = {
         return
       }
 
+      const max_detail_len = 256
+      if (detail.length > max_detail_len)
+        detail = detail.substr(0, max_detail_len) + ' ...'
+
       vm.$toast.add({
         severity: type || 'success',
         summary: summary,
