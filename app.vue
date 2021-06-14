@@ -302,6 +302,7 @@ const relativeTime = require('dayjs/plugin/relativeTime')
 dayjs.extend(relativeTime)
 
 const Terminal = require('xterm').Terminal
+const FitAddon = require('xterm-addon-fit').FitAddon
 
 module.exports = {
   mounted: function() {
@@ -319,6 +320,8 @@ module.exports = {
       cols: 160,
       convertEol: true /* important to make newline alignment correct */
     })
+    vm.xterm_fit_addon = new FitAddon()
+    vm.xterm.loadAddon(vm.xterm_fit_addon)
   },
 
   watch: {
@@ -326,6 +329,7 @@ module.exports = {
       if (inUse) {
         this.$nextTick(function() {
           this.xterm.open(document.getElementById('xterm_console'))
+          this.xterm_fit_addon.fit()
           this.xterm.clear()
           this.xterm.write(this.console_content)
         })
@@ -643,6 +647,7 @@ module.exports = {
       cluster_tasks: [],
 
       xterm: null,
+      xterm_fit_addon: null,
       use_xterm: false,
       console_show: false,
       console_full: false,
