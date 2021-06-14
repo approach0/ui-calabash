@@ -1013,7 +1013,7 @@ module.exports = {
         if (data.error)
           throw new Error(data.error)
 
-        vm.displayMessage('success', taskID, JSON.stringify(data))
+        vm.displayMessage('success', `Deleted task #${taskID}`, JSON.stringify(data))
       })
       .catch(err => {
         if (err.response && err.response.status === 405)
