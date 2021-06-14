@@ -748,7 +748,7 @@ module.exports = {
       }
 
       const max_detail_len = 256
-      if (detail.length > max_detail_len)
+      if (detail && detail.length > max_detail_len)
         detail = detail.substr(0, max_detail_len) + ' ...'
 
       vm.$toast.add({
@@ -1013,7 +1013,7 @@ module.exports = {
         if (data.error)
           throw new Error(data.error)
 
-        vm.displayMessage('success', `Deleted task #${taskID}`, JSON.stringify(data))
+        vm.displayMessage('success', `Deleted Task #${taskID}`, JSON.stringify(data))
       })
       .catch(err => {
         if (err.response && err.response.status === 405)
