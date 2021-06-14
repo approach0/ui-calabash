@@ -1281,7 +1281,7 @@ module.exports = {
       const workflows = vm.configs.github.workflows || []
 
       workflows.forEach(repo_ => {
-        const github_pat = vm.configs.github.open_PAT
+        const github_pat = vm.configs.github.open_PAT.split(':')[1]
 
         const fetcher = function(repo) {
           const randtok = Math.random().toString(36).substr(2)
