@@ -1434,4 +1434,8 @@ td {
   width: 100%;
   z-index: 99;
 }
+
+#xterm_console, #xterm_console > * {
+  height: 100%;
+}
 </style>
