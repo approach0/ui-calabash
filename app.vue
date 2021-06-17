@@ -996,7 +996,7 @@ module.exports = {
         if (data.error)
           throw new Error(data.error)
 
-        vm.displayMessage('success', JSON.stringify(data))
+        vm.displayMessage('success', 'Task Cleanup', JSON.stringify(data))
       })
       .catch(err => {
         if (err.response && err.response.status === 405)
